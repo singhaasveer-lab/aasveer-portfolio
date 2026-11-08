@@ -1,0 +1,82 @@
+{
+  "review_notes": [
+    "Twelve entries from the resume. Eight prominent, four in the closed 'More certifications' disclosure.",
+    "completed_on, credential_url and certificate_url are optional. Add one only for a real date, link or certificate; absent means none is shown.",
+    "Open confirmation: the resume groups 'Azure Database for PostgreSQL: Vector Search' on the Microsoft Learn line. It is recorded under Microsoft Learn as written.",
+    "visibility is optional: \"featured\" marks an entry, \"hidden\" removes it from the page and the API. None is set: the owner decides."
+  ],
+  "certifications": [
+    {
+      "issuer": "Anthropic Claude Academy",
+      "course_name": "Claude Code 101",
+      "is_prominent": true,
+      "display_order": 1
+    },
+    {
+      "issuer": "Anthropic Claude Academy",
+      "course_name": "Building with the Claude API",
+      "is_prominent": true,
+      "display_order": 2
+    },
+    {
+      "issuer": "IBM SkillsBuild",
+      "course_name": "Introduction to Large Language Models",
+      "is_prominent": true,
+      "display_order": 3
+    },
+    {
+      "issuer": "IBM SkillsBuild",
+      "course_name": "Machine Learning",
+      "is_prominent": true,
+      "display_order": 4
+    },
+    {
+      "issuer": "Google Cloud Skills Boost",
+      "course_name": "Introduction to Generative AI",
+      "is_prominent": true,
+      "display_order": 5
+    },
+    {
+      "issuer": "Cisco",
+      "course_name": "Introduction to Modern AI",
+      "is_prominent": true,
+      "display_order": 6
+    },
+    {
+      "issuer": "Microsoft Learn",
+      "course_name": "Introduction to Prompt Engineering with GitHub",
+      "is_prominent": true,
+      "display_order": 7
+    },
+    {
+      "issuer": "Microsoft Learn",
+      "course_name": "Azure Database for PostgreSQL: Vector Search",
+      "is_prominent": true,
+      "display_order": 8
+    },
+    {
+      "issuer": "Anthropic Claude Academy",
+      "course_name": "Claude Platform 101",
+      "is_prominent": false,
+      "display_order": 9
+    },
+    {
+      "issuer": "Anthropic Claude Academy",
+      "course_name": "Claude 101",
+      "is_prominent": false,
+      "display_order": 10
+    },
+    {
+      "issuer": "IBM SkillsBuild",
+      "course_name": "AI Practitioner: Ready to Use AI",
+      "is_prominent": false,
+      "display_order": 11
+    },
+    {
+      "issuer": "HP LIFE",
+      "course_name": "Critical Thinking in the AI Era",
+      "is_prominent": false,
+      "display_order": 12
+    }
+  ]
+}

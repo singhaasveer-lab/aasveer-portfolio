@@ -1,0 +1,385 @@
+{
+  "review_notes": [
+    "Every edge was checked against the named file in that project's source before it was added. A skill is only linked to a project that actually uses it.",
+    "`skill` must match an entry in content/skills.json exactly. tests/content/explorer.test.ts enforces this.",
+    "Edges go beyond the resume starter list where the source shows it: TF-IDF and Cosine Similarity in StudyForge AI, and FastAPI, SQLite, Gemini and a keyword-ranked knowledge base in InterviewIQ.",
+    "No ratings, percentages or experience scores belong in this file."
+  ],
+  "skills": [
+    {
+      "id": "rag",
+      "label": "RAG",
+      "skill": "RAG",
+      "lab": "rag",
+      "explanation": "Retrieval-augmented generation finds relevant source text first, so a result rests on real material and not on a model's memory."
+    },
+    {
+      "id": "nlp",
+      "label": "NLP",
+      "skill": "NLP",
+      "lab": "nlp",
+      "explanation": "Natural language processing turns human text into signals, scores or vectors that software can work with."
+    },
+    {
+      "id": "ocr",
+      "label": "OCR",
+      "skill": "OCR",
+      "lab": "ocr",
+      "explanation": "Optical character recognition reads the text inside an image and returns it as characters."
+    },
+    {
+      "id": "tf-idf",
+      "label": "TF-IDF",
+      "skill": "Text Vectorization (TF-IDF)",
+      "lab": "rag",
+      "explanation": "TF-IDF weights a word by how often it appears in one text and how rare it is across the collection, turning text into comparable vectors."
+    },
+    {
+      "id": "cosine",
+      "label": "Cosine Similarity",
+      "skill": "Cosine Similarity",
+      "lab": "rag",
+      "explanation": "Cosine similarity scores how closely two vectors point in the same direction, which ranks texts by how alike they are."
+    },
+    {
+      "id": "recsys",
+      "label": "Recommendation Systems",
+      "skill": "Recommendation Systems",
+      "lab": "recommendation",
+      "explanation": "A recommendation system ranks items from a catalogue by how well they match a person's profile."
+    },
+    {
+      "id": "sklearn",
+      "label": "Scikit-learn",
+      "skill": "Scikit-learn",
+      "explanation": "A Python machine-learning library. These projects use its TF-IDF vectorizer and cosine-similarity functions."
+    },
+    {
+      "id": "gemini",
+      "label": "Gemini API",
+      "skill": "Google Gemini API (GenAI SDK)",
+      "explanation": "Google's generative model API, called here through the GenAI SDK to write, evaluate and personalize text.",
+      "lab": "llm-evaluation"
+    },
+    {
+      "id": "fastapi",
+      "label": "FastAPI",
+      "skill": "FastAPI",
+      "explanation": "A Python framework for building REST APIs, with request validation through Pydantic models."
+    },
+    {
+      "id": "sqlite",
+      "label": "SQLite",
+      "skill": "SQLite",
+      "explanation": "A file-based SQL database that needs no separate server, which suits local-first applications."
+    },
+    {
+      "id": "streamlit",
+      "label": "Streamlit",
+      "skill": "Streamlit",
+      "explanation": "A Python framework for building data application interfaces without a separate frontend codebase."
+    },
+    {
+      "id": "jwt",
+      "label": "JWT Authentication",
+      "skill": "JWT Authentication",
+      "explanation": "Signed JSON Web Tokens let a server confirm who is calling an API without storing a session."
+    },
+    {
+      "id": "react",
+      "label": "React",
+      "skill": "React",
+      "explanation": "A JavaScript library for building interfaces from reusable components."
+    },
+    {
+      "id": "typescript",
+      "label": "TypeScript",
+      "skill": "TypeScript",
+      "explanation": "JavaScript with static types, which catches a class of errors before the code runs."
+    },
+    {
+      "id": "vite",
+      "label": "Vite",
+      "skill": "Vite",
+      "explanation": "A frontend build tool and development server with fast hot reloading."
+    },
+    {
+      "id": "tailwind",
+      "label": "Tailwind CSS",
+      "skill": "Tailwind CSS",
+      "explanation": "A utility-first CSS framework for building interfaces directly in markup."
+    }
+  ],
+  "edges": [
+    {
+      "skill": "rag",
+      "project": "wingman-ai",
+      "note": "Local knowledge base searched with TF-IDF and cosine similarity.",
+      "evidence": "core/rag.py"
+    },
+    {
+      "skill": "rag",
+      "project": "studyforge-ai",
+      "note": "Source-grounded answers from retrieved chunks of uploaded PDFs.",
+      "evidence": "backend/app/main.py"
+    },
+    {
+      "skill": "rag",
+      "project": "interviewiq",
+      "note": "Knowledge base that stores notes as paragraph chunks and ranks them by keyword matches.",
+      "evidence": "backend/app/routes/rag.py"
+    },
+    {
+      "skill": "nlp",
+      "project": "wingman-ai",
+      "note": "Signal analysis of conversations: sentiment, reciprocity, questions and energy.",
+      "evidence": "core/coach.py"
+    },
+    {
+      "skill": "nlp",
+      "project": "studyforge-ai",
+      "note": "Text processing for retrieval over study material, within the approved contribution.",
+      "evidence": "backend/app/main.py"
+    },
+    {
+      "skill": "ocr",
+      "project": "wingman-ai",
+      "note": "Reads chat screenshots with Tesseract through pytesseract.",
+      "evidence": "core/ocr.py"
+    },
+    {
+      "skill": "tf-idf",
+      "project": "wingman-ai",
+      "note": "Vectorizes knowledge-base entries and the conversation for retrieval.",
+      "evidence": "core/rag.py"
+    },
+    {
+      "skill": "tf-idf",
+      "project": "giftbro-ai",
+      "note": "Vectorizes catalogue items and the recipient profile.",
+      "evidence": "recommender.py"
+    },
+    {
+      "skill": "tf-idf",
+      "project": "studyforge-ai",
+      "note": "Vectorizes PDF chunks and the student's question.",
+      "evidence": "backend/app/main.py"
+    },
+    {
+      "skill": "cosine",
+      "project": "wingman-ai",
+      "note": "Ranks knowledge-base entries against the conversation.",
+      "evidence": "core/rag.py"
+    },
+    {
+      "skill": "cosine",
+      "project": "giftbro-ai",
+      "note": "Provides the semantic signal in the weighted ranking.",
+      "evidence": "recommender.py"
+    },
+    {
+      "skill": "cosine",
+      "project": "studyforge-ai",
+      "note": "Ranks PDF chunks against the question.",
+      "evidence": "backend/app/main.py"
+    },
+    {
+      "skill": "recsys",
+      "project": "giftbro-ai",
+      "note": "Hybrid recommender that ranks real catalogue items.",
+      "evidence": "recommender.py"
+    },
+    {
+      "skill": "sklearn",
+      "project": "wingman-ai",
+      "note": "TfidfVectorizer and cosine_similarity for retrieval.",
+      "evidence": "core/rag.py"
+    },
+    {
+      "skill": "sklearn",
+      "project": "giftbro-ai",
+      "note": "TfidfVectorizer and cosine_similarity for scoring.",
+      "evidence": "recommender.py"
+    },
+    {
+      "skill": "sklearn",
+      "project": "studyforge-ai",
+      "note": "TfidfVectorizer and cosine_similarity for retrieval.",
+      "evidence": "backend/app/main.py"
+    },
+    {
+      "skill": "gemini",
+      "project": "interviewiq",
+      "note": "Generates questions and evaluates answers, resumes and code.",
+      "evidence": "backend/app/services/ai_service.py"
+    },
+    {
+      "skill": "gemini",
+      "project": "giftbro-ai",
+      "note": "Optional personalization layer around the ranked shortlist.",
+      "evidence": "gemini_service.py"
+    },
+    {
+      "skill": "gemini",
+      "project": "studyforge-ai",
+      "note": "Writes answers, flashcards and quizzes from study material.",
+      "evidence": "backend/app/main.py"
+    },
+    {
+      "skill": "fastapi",
+      "project": "interviewiq",
+      "note": "Backend API with separate routers for each feature.",
+      "evidence": "backend/app/main.py"
+    },
+    {
+      "skill": "fastapi",
+      "project": "wingman-ai",
+      "note": "REST API for text and screenshot analysis.",
+      "evidence": "api.py"
+    },
+    {
+      "skill": "fastapi",
+      "project": "giftbro-ai",
+      "note": "REST API exposing the recommendation pipeline.",
+      "evidence": "api.py"
+    },
+    {
+      "skill": "fastapi",
+      "project": "studyforge-ai",
+      "note": "Backend for accounts, documents, chat and study tools.",
+      "evidence": "backend/app/main.py"
+    },
+    {
+      "skill": "sqlite",
+      "project": "interviewiq",
+      "note": "Users, interviews, evaluations and documents, through SQLAlchemy.",
+      "evidence": "backend/app/database.py"
+    },
+    {
+      "skill": "sqlite",
+      "project": "wingman-ai",
+      "note": "Saved items and analysis history.",
+      "evidence": "core/db.py"
+    },
+    {
+      "skill": "sqlite",
+      "project": "giftbro-ai",
+      "note": "Recommendation history and favorites.",
+      "evidence": "database.py"
+    },
+    {
+      "skill": "sqlite",
+      "project": "studyforge-ai",
+      "note": "Accounts, chunks, quizzes, tasks and conversations.",
+      "evidence": "backend/app/main.py"
+    },
+    {
+      "skill": "streamlit",
+      "project": "wingman-ai",
+      "note": "The multi-page application interface.",
+      "evidence": "app.py"
+    },
+    {
+      "skill": "streamlit",
+      "project": "giftbro-ai",
+      "note": "The recommendation interface.",
+      "evidence": "app.py"
+    },
+    {
+      "skill": "jwt",
+      "project": "interviewiq",
+      "note": "Login returns a signed JWT used as a bearer token.",
+      "evidence": "backend/app/auth/security.py"
+    },
+    {
+      "skill": "react",
+      "project": "interviewiq",
+      "note": "The React 19 application views.",
+      "evidence": "src/App.tsx"
+    },
+    {
+      "skill": "react",
+      "project": "studyforge-ai",
+      "note": "The React interface, built with Next.js.",
+      "evidence": "frontend/app/page.tsx"
+    },
+    {
+      "skill": "react",
+      "project": "smartqueue-ai",
+      "note": "The whole application, including shared queue state through Context.",
+      "evidence": "src/App.tsx"
+    },
+    {
+      "skill": "typescript",
+      "project": "interviewiq",
+      "note": "The typed frontend and the Express server.",
+      "evidence": "src/types/index.ts"
+    },
+    {
+      "skill": "typescript",
+      "project": "studyforge-ai",
+      "note": "The typed Next.js frontend.",
+      "evidence": "frontend/app/study-api.ts"
+    },
+    {
+      "skill": "typescript",
+      "project": "smartqueue-ai",
+      "note": "Typed tokens, counters and the rule engine.",
+      "evidence": "src/types.ts"
+    },
+    {
+      "skill": "fastapi",
+      "project": "pennybloom",
+      "note": "A thin API layer over the shared Python core, with no business logic.",
+      "evidence": "backend/app/main.py"
+    },
+    {
+      "skill": "react",
+      "project": "pennybloom",
+      "note": "The web interface: dashboard, transactions, reports and budgets.",
+      "evidence": "frontend/src/App.tsx"
+    },
+    {
+      "skill": "typescript",
+      "project": "pennybloom",
+      "note": "The typed web app and its API client.",
+      "evidence": "frontend/src/types.ts"
+    },
+    {
+      "skill": "vite",
+      "project": "interviewiq",
+      "note": "Builds the app and serves it through the Express server.",
+      "evidence": "vite.config.ts"
+    },
+    {
+      "skill": "vite",
+      "project": "smartqueue-ai",
+      "note": "The build tool and development server.",
+      "evidence": "vite.config.ts"
+    },
+    {
+      "skill": "vite",
+      "project": "pennybloom",
+      "note": "The build tool and development server.",
+      "evidence": "frontend/vite.config.ts"
+    },
+    {
+      "skill": "tailwind",
+      "project": "interviewiq",
+      "note": "Styles the application views.",
+      "evidence": "package.json"
+    },
+    {
+      "skill": "tailwind",
+      "project": "smartqueue-ai",
+      "note": "Styles the application views.",
+      "evidence": "package.json"
+    },
+    {
+      "skill": "tailwind",
+      "project": "pennybloom",
+      "note": "Styles the web interface.",
+      "evidence": "frontend/package.json"
+    }
+  ]
+}

@@ -1,0 +1,604 @@
+/*
+ * Credential Orbit: the experimental certifications layout (src/config/layout.ts switches it).
+ * The stage is a size container, so cards are placed with container units and moved only by
+ * transforms: the orbit never shifts the layout. Tokens come from globals.css.
+ */
+@layer components {
+  .co {
+    position: relative;
+  }
+  .co-layout {
+    display: grid;
+    gap: 22px;
+    margin-top: 28px;
+  }
+  @media (min-width: 1024px) {
+    .co-layout {
+      grid-template-columns: 228px minmax(0, 1fr);
+      gap: clamp(24px, 3vw, 44px);
+      align-items: start;
+    }
+  }
+
+  /* ---- Academy selector ---- */
+  /* Phones and tablets: every academy visible at once, wrapping instead of scrolling sideways. */
+  .co-academies {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .co-label {
+    display: none;
+  }
+  @media (min-width: 1024px) {
+    .co-academies {
+      position: sticky;
+      top: calc(var(--header-h) + 24px);
+      flex-direction: column;
+      gap: 2px;
+      margin: 0;
+      padding: 0 0 0 14px;
+      overflow: visible;
+      border-left: 1px solid var(--line);
+    }
+    .co-label {
+      display: block;
+      margin-bottom: 10px;
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+  }
+  .co-academy {
+    position: relative;
+    flex: 0 1 auto;
+    max-width: 100%;
+    display: grid;
+    grid-template-columns: 30px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    min-height: 48px;
+    padding: 6px 10px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: rgb(8 12 24 / 0.6);
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 0.86rem;
+    line-height: 1.25;
+    text-align: left;
+    cursor: pointer;
+    transition:
+      color var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out),
+      background-color var(--dur-fast) var(--ease-out);
+  }
+  @media (min-width: 1024px) {
+    .co-academy {
+      width: 100%;
+      border-color: transparent;
+      background: none;
+    }
+    /* The active marker: a short bar on the selector's rail. */
+    .co-academy::before {
+      content: "";
+      position: absolute;
+      top: 10px;
+      bottom: 10px;
+      left: -15px;
+      width: 2px;
+      background: transparent;
+      transition: background-color var(--dur-fast) var(--ease-out);
+    }
+    .co-academy[aria-pressed="true"]::before {
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent);
+    }
+  }
+  .co-academy:hover {
+    color: var(--text);
+  }
+  .co-academy[aria-pressed="true"] {
+    border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+    color: var(--text);
+  }
+  .co-academy-mark {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border: 1px solid var(--line-strong);
+    border-radius: 50%;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.04em;
+    color: var(--accent-strong);
+  }
+  .co-academy[aria-pressed="true"] .co-academy-mark {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 14%, transparent);
+  }
+  .co-academy-name {
+    min-width: 0;
+  }
+  @media (min-width: 1024px) {
+    .co-academy-name {
+      white-space: normal;
+    }
+  }
+  .co-academy-count {
+    min-width: 1.6rem;
+    padding: 1px 6px;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    text-align: center;
+  }
+
+  /* ---- Toolbar ---- */
+  .co-main {
+    min-width: 0;
+  }
+  .co-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 18px;
+    margin-bottom: 10px;
+  }
+  .co-status {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .co-pause {
+    min-height: 44px;
+    padding: 0 14px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    background: none;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .co-pause:hover,
+  .co-pause[aria-pressed="true"] {
+    border-color: var(--accent);
+    color: var(--accent-strong);
+  }
+
+  /* ---- The stage ---- */
+  .co-stage {
+    position: relative;
+    container-type: size;
+    height: clamp(560px, 56vw, 720px);
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background:
+      radial-gradient(42% 36% at 50% 50%, rgb(63 213 245 / 0.08), transparent 70%),
+      radial-gradient(70% 60% at 50% 50%, rgb(155 135 255 / 0.06), transparent 75%),
+      linear-gradient(rgb(200 214 255 / 0.03) 1px, transparent 1px) 0 0 / 100% 36px,
+      linear-gradient(90deg, rgb(200 214 255 / 0.03) 1px, transparent 1px) 0 0 / 36px 100%,
+      rgb(5 8 18);
+  }
+  .co-stage[data-compact] {
+    height: 470px;
+  }
+
+  .co-stars span {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    border-radius: 50%;
+    background: rgb(200 225 255 / 0.55);
+    animation: co-twinkle 6s ease-in-out infinite;
+  }
+  .co-stars span[data-big] {
+    width: 3px;
+    height: 3px;
+    background: rgb(160 230 255 / 0.8);
+    box-shadow: 0 0 6px rgb(63 213 245 / 0.6);
+  }
+  @keyframes co-twinkle {
+    50% {
+      opacity: 0.25;
+    }
+  }
+
+  .co-paths {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  .co-ring {
+    fill: none;
+    stroke: rgb(120 200 255 / 0.32);
+    stroke-width: 1.2;
+    vector-effect: non-scaling-stroke;
+  }
+  .co-ring-outer {
+    stroke: rgb(155 135 255 / 0.14);
+    stroke-dasharray: 2 5;
+  }
+  /* The luminous streak travelling the path: a short bright dash on a long gap. */
+  .co-streak {
+    fill: none;
+    stroke: var(--accent-strong);
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-dasharray: 16 84;
+    vector-effect: non-scaling-stroke;
+    filter: drop-shadow(0 0 4px var(--accent));
+    animation: co-streak 40s linear infinite;
+  }
+  @keyframes co-streak {
+    to {
+      stroke-dashoffset: -100;
+    }
+  }
+  .co-stage[data-paused] .co-streak {
+    animation-play-state: paused;
+  }
+  .co-link {
+    stroke: rgb(120 210 255 / 0.45);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+    transition: stroke-opacity 400ms var(--ease-out);
+  }
+  .co-link[data-dim] {
+    stroke-opacity: 0.25;
+  }
+
+  /* Placed from the stage's own size: --x and --y are percentages of its width and height. */
+  .co-node,
+  .co-card {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+  .co-node {
+    width: 9px;
+    height: 9px;
+    border: 1px solid var(--accent);
+    border-radius: 50%;
+    background: var(--ink);
+    transform: translate(calc(var(--x) * 1cqw - 50%), calc(var(--y) * 1cqh - 50%));
+    transition:
+      opacity 400ms var(--ease-out),
+      background-color 400ms var(--ease-out);
+    pointer-events: none;
+  }
+  .co-node[data-dim] {
+    opacity: 0.35;
+  }
+  .co-node:not([data-dim]) {
+    background: var(--accent);
+    box-shadow: 0 0 10px var(--accent);
+  }
+  .co-node[data-current] {
+    width: 13px;
+    height: 13px;
+    background: var(--accent-strong);
+  }
+
+  .co-card {
+    display: grid;
+    gap: 4px;
+    width: clamp(150px, 19cqw, 196px);
+    padding: 10px 26px 10px 12px;
+    border: 1px solid rgb(120 200 255 / 0.28);
+    border-radius: 3px;
+    background: linear-gradient(160deg, rgb(16 26 48 / 0.96), rgb(8 12 24 / 0.96));
+    box-shadow: 0 10px 28px -14px rgb(0 0 0 / 0.9);
+    color: var(--text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transform: translate(calc(var(--x) * 1cqw - 50%), calc(var(--y) * 1cqh - 50%)) scale(var(--s));
+    /* Depth reads as light, not transparency, so text keeps its contrast at the back. */
+    filter: brightness(calc(0.7 + 0.3 * var(--o)));
+    transition:
+      opacity 450ms var(--ease-out),
+      border-color 300ms var(--ease-out),
+      box-shadow 300ms var(--ease-out),
+      filter 450ms var(--ease-out);
+    will-change: transform;
+  }
+  .co-card:hover,
+  .co-card:focus-visible {
+    border-color: var(--accent);
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent),
+      0 12px 30px -14px rgb(0 0 0 / 0.9);
+  }
+  .co-card[data-dim] {
+    border-color: rgb(120 200 255 / 0.12);
+    background: rgb(8 12 24 / 0.92);
+    box-shadow: none;
+    filter: brightness(0.7) saturate(0.4);
+  }
+  .co-card[data-dim] .co-card-issuer {
+    color: var(--text);
+  }
+  .co-card[data-hot] {
+    border-color: color-mix(in srgb, var(--accent) 75%, transparent);
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent),
+      0 0 26px -6px var(--accent-glow, rgb(63 213 245 / 0.5));
+  }
+  .co-card-id {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.12em;
+    color: var(--accent-strong);
+  }
+  .co-card-mark {
+    padding: 0 4px;
+    border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
+    border-radius: 2px;
+  }
+  .co-card-title {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    font-family: var(--font-display);
+    font-size: clamp(0.84rem, 1.15cqw, 0.98rem);
+    line-height: 1.2;
+  }
+  .co-card-issuer {
+    overflow: hidden;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .co-card-open {
+    position: absolute;
+    top: 7px;
+    right: 9px;
+    font-size: 0.9rem;
+    color: var(--accent-strong);
+  }
+
+  /* The centre: a restrained identity, so the orbit stays the attraction. */
+  .co-core {
+    position: absolute;
+    top: 50cqh;
+    left: 50cqw;
+    display: grid;
+    justify-items: center;
+    gap: 2px;
+    width: 26cqw;
+    text-align: center;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+  .co-core-name {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--accent-strong);
+  }
+  .co-core-sub {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .co-core-count {
+    margin-top: 6px;
+    font-family: var(--font-display);
+    font-size: clamp(2.2rem, 5cqw, 3.4rem);
+    font-weight: 300;
+    line-height: 1;
+    color: var(--text);
+  }
+
+  /* ---- Phones: a shallow orbit, one credential at its front ---- */
+  .co-stage[data-compact] .co-core {
+    top: 30cqh;
+    width: 60cqw;
+  }
+  .co-stage[data-compact] .co-core-count {
+    font-size: 1.9rem;
+  }
+  .co-stage[data-compact] .co-card {
+    width: min(88cqw, 340px);
+    padding: 16px 30px 16px 16px;
+    transform: translate(calc(50cqw - 50%), calc(64cqh));
+    opacity: 1;
+  }
+  .co-stage[data-compact] .co-card-title {
+    font-size: 1.15rem;
+  }
+  .co-stage[data-compact] .co-card[data-hidden] {
+    visibility: hidden;
+    opacity: 0;
+  }
+  .co-link-front {
+    stroke: var(--accent);
+    stroke-opacity: 0.7;
+  }
+  .co-stepper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 12px;
+  }
+  .co-step {
+    min-height: 48px;
+    padding: 0 16px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    background: none;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .co-step-count {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--accent-strong);
+  }
+
+  /* ---- Credential record ---- */
+  .co-panel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: min(380px, 100%);
+    padding: 24px;
+    overflow-y: auto;
+    border-left: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line));
+    background:
+      linear-gradient(rgb(200 214 255 / 0.03) 1px, transparent 1px) 0 0 / 100% 28px,
+      rgb(7 11 22 / 0.97);
+    box-shadow: -24px 0 50px -20px rgb(0 0 0 / 0.9);
+  }
+  .co-panel-bar {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent-strong);
+  }
+  .co-panel-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 2.4vw, 2rem);
+    font-weight: 380;
+    line-height: 1.12;
+    outline: none;
+  }
+  .co-panel-facts {
+    display: grid;
+    gap: 12px;
+    margin: 0;
+  }
+  .co-panel-facts dt {
+    font-family: var(--font-mono);
+    font-size: 0.64rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .co-panel-facts dd {
+    margin: 3px 0 0;
+    color: var(--text);
+  }
+  .co-panel-preview {
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--line-strong);
+  }
+  .co-panel-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .co-panel-actions:empty {
+    display: none;
+  }
+  .co-panel-note {
+    padding: 10px 12px;
+    border-left: 2px solid var(--violet);
+    background: color-mix(in srgb, var(--violet) 8%, transparent);
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: var(--text);
+  }
+  .co-panel-close {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    margin-top: auto;
+    padding: 0 14px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    background: none;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .co-panel-close:hover {
+    border-color: var(--accent);
+    color: var(--accent-strong);
+  }
+
+  /* ---- The plain list ---- */
+  .co-list {
+    margin-top: 18px;
+  }
+  .co-list ol {
+    display: grid;
+    gap: 2px;
+    margin: 10px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  @media (min-width: 768px) {
+    .co-list ol {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: 24px;
+    }
+  }
+  .co-list li {
+    display: grid;
+    grid-template-columns: 2rem minmax(0, 1fr);
+    gap: 8px;
+    padding: 9px 0;
+    border-top: 1px solid var(--line);
+    transition: opacity 300ms var(--ease-out);
+  }
+  .co-list li[data-dim] {
+    opacity: 0.5;
+  }
+  .co-list-index {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--accent-strong);
+  }
+  .co-list-title {
+    display: block;
+    color: var(--text);
+  }
+  .co-list-meta {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+}

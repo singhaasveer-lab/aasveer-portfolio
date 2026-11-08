@@ -1,0 +1,34 @@
+{
+  "full_name": "Aasveer Singh",
+  "headline": "AI/ML Engineer | Generative AI, LLMs & RAG | Python, SQL, FastAPI",
+  "status_label": "B.Tech CSE (AI/ML) student",
+  "role": "AI/ML Engineer",
+  "intro": "Building end-to-end AI applications with Python, SQL and FastAPI: multi-stage LLM pipelines, retrieval-augmented generation and NLP, served through REST APIs.",
+  "focus_areas": [
+    "Generative AI",
+    "Large Language Models",
+    "RAG",
+    "NLP",
+    "Machine Learning",
+    "Recommendation Systems"
+  ],
+  "summary": "Results-driven AI/ML Engineer who builds end-to-end AI applications with Python, SQL and FastAPI. Skilled in Machine Learning, NLP, Generative AI, LLMs, RAG and prompt engineering, with a focus on recommendation engines and OCR-based document intelligence. Experienced in integrating LLM APIs (OpenAI, Gemini, Claude), designing multi-stage AI pipelines, serving them through REST APIs and evaluating AI outputs.",
+  "location": "Amritsar, Punjab, India",
+  "education": {
+    "degree": "B.Tech, Computer Science & Engineering (AI/ML)",
+    "institution": "Amritsar Group of Colleges",
+    "period": "2023–2027"
+  },
+  "links": {
+    "github_url": "https://github.com/singhaasveer-lab",
+    "linkedin_url": "https://linkedin.com/in/aasveer-singh",
+    "email": null,
+    "resume_href": "/resume/Aasveer_Singh_AI_ML_Engineer_Resume_v3_fnl.pdf"
+  },
+  "review_notes": [
+    "links.email is null: the address is not published on the website or in its public JSON. It appears only in the resume PDF. Visitors use the contact form, GitHub or LinkedIn.",
+    "resume_href points at the resume PDF in public/resume/, published unchanged.",
+    "No phone number is stored or displayed on the page.",
+    "role, intro and focus_areas (hero, 2026-10-31): focus_areas are the owner's list; intro is drawn from the resume summary and adds no claim of its own."
+  ]
+}

@@ -1,0 +1,137 @@
+{
+  "review_notes": [
+    "Each case is reconstructed from the project's public source code, tests and README on its main branch, checked on 2026-11-08. Every implementation detail below was found in the cited file. Nothing here describes a debugging incident, a metric, a user count or a timeline: the code does not record those, so they are not claimed.",
+    "The Investigation chapter describes the constraints the implementation shows were analysed (the cases the code distinguishes and handles), not a recalled sequence of events.",
+    "Contributions use the owner's confirmed wording for StudyForge AI, Wingman AI and GiftBro AI. PennyBloom and InterviewIQ are left out until their contributions are confirmed; SmartQueue AI is left out because its stated contribution is product logic without an engineering story documented in its source."
+  ],
+  "cases": [
+    {
+      "id": "grounded-answers",
+      "project": "studyforge-ai",
+      "title": "Answers that stay with the source",
+      "category": "Retrieval and reliability",
+      "intro": "A study assistant that answers from a student's own PDFs, and keeps working, honestly labelled, when the language model cannot.",
+      "challenge": "Students ask questions about the PDFs they upload. An answer is only useful if it comes from that material and can be traced back to a page. The assistant also depends on an external model provider, which may not be configured or may be busy.",
+      "investigation": "The code distinguishes three situations that each need a different, honest response: a model is available and answers, no model is configured, and the provider is busy. Retrieval therefore has to work on its own, without the model, and every answer has to say which of these it came from.",
+      "approach": [
+        "PDF text is read page by page and split into 180-word chunks that overlap by 30 words, each stored in SQLite with its page number.",
+        "A question is matched against the chunks with TF-IDF and cosine similarity, and up to four chunks with a score above zero are kept.",
+        "When the model answers from the PDF, the page citations in its answer are read back and returned with that page's text as the sources.",
+        "Without a configured model, the retrieved passages themselves are returned in a labelled source-only mode, with a message saying the model is not configured.",
+        "Generated flashcards and quizzes are checked field by field, near-duplicate questions are dropped by comparing their meaningful words, and when the provider is busy a quiz is built from the document's own sentences."
+      ],
+      "result": [
+        "Questions about an uploaded PDF are answered with page-level sources, and the feature still returns the relevant passages when no model is available.",
+        "The backend has tests for these paths, including test_source_only_mode, test_provider_failure_is_retryable, test_local_quiz_is_available_when_provider_is_busy, test_gemini_incomplete_finish_is_not_success and test_study_items_keep_distinct_concepts_and_add_focus."
+      ],
+      "takeaway": "Design for the failure case. When the model is unavailable the feature should still work, and say plainly what it is showing.",
+      "contribution": "RAG, study planning, quizzes, NLP, FastAPI and SQLite.",
+      "contribution_status": "approved",
+      "sources": [
+        {
+          "label": "Chunking, retrieval and the source-only answer",
+          "path": "backend/app/main.py",
+          "url": "https://github.com/akshita-sharda/STUDYFORGE-AI-/blob/main/backend/app/main.py"
+        },
+        {
+          "label": "Tests: source-only mode and provider failure",
+          "path": "backend/tests/test_chat.py",
+          "url": "https://github.com/akshita-sharda/STUDYFORGE-AI-/blob/main/backend/tests/test_chat.py"
+        },
+        {
+          "label": "Tests: AI reliability and the local quiz",
+          "path": "backend/tests/test_ai_reliability.py",
+          "url": "https://github.com/akshita-sharda/STUDYFORGE-AI-/blob/main/backend/tests/test_ai_reliability.py"
+        }
+      ]
+    },
+    {
+      "id": "screenshot-to-brief",
+      "project": "wingman-ai",
+      "title": "From a screenshot to a decision brief",
+      "category": "OCR, NLP and local retrieval",
+      "intro": "Turning an image of a conversation into measured signals and written guidance, each of which can be explained.",
+      "challenge": "Conversations usually arrive as screenshots, not text. The analysis has to start from an image, and its conclusions need to be explainable rather than a single opaque score.",
+      "investigation": "The README sets the principle: \"Read patterns, not single messages.\" That rules out judging one message, or one number, and points to separate signals measured across the whole conversation, which must behave the same whether the text was typed or read from an image.",
+      "approach": [
+        "Tesseract OCR reads the screenshot. Its location comes from TESSERACT_CMD or the standard Windows install paths, and failures return a readable message, such as no text detected or Tesseract not found, instead of an exception.",
+        "The extracted text goes through the same analysis as typed text: sentiment, questions, reciprocity and energy are scored separately, and fixed weights combine them (sentiment 0.35, reciprocity 0.30, flirt 0.20, questions 0.15).",
+        "Guidance comes from a local knowledge base searched with TF-IDF over words and word pairs, and the three closest entries are returned with their scores.",
+        "A FastAPI endpoint accepts a screenshot, rejects anything that is not an image with a 400, returns a 422 when no text can be read, and otherwise returns the extracted text with the full analysis."
+      ],
+      "result": [
+        "One analysis core serves both the Streamlit app and a REST API, for typed conversations and for screenshots.",
+        "Every recommendation can be traced to measured signals and to named entries in the knowledge base."
+      ],
+      "takeaway": "Connect OCR to a downstream pipeline instead of stopping at extracted text, and prefer transparent signals so that every result can be explained.",
+      "contribution": "Backend, local RAG and NLP, OCR, Reply Lab and Dating Tips. Built collaboratively with Akshita Sharda.",
+      "contribution_status": "approved",
+      "sources": [
+        {
+          "label": "Tesseract OCR with readable failures",
+          "path": "core/ocr.py",
+          "url": "https://github.com/singhaasveer-lab/wingman_ai/blob/main/core/ocr.py"
+        },
+        {
+          "label": "Signal scoring and weights",
+          "path": "core/coach.py",
+          "url": "https://github.com/singhaasveer-lab/wingman_ai/blob/main/core/coach.py"
+        },
+        {
+          "label": "Local TF-IDF retrieval",
+          "path": "core/rag.py",
+          "url": "https://github.com/singhaasveer-lab/wingman_ai/blob/main/core/rag.py"
+        },
+        {
+          "label": "Screenshot endpoint",
+          "path": "api.py",
+          "url": "https://github.com/singhaasveer-lab/wingman_ai/blob/main/api.py"
+        }
+      ]
+    },
+    {
+      "id": "rank-then-generate",
+      "project": "giftbro-ai",
+      "title": "Ranking first, generating second",
+      "category": "Recommendation and generative AI",
+      "intro": "A recommender in which the language model can explain a choice, but never invent one.",
+      "challenge": "Asking a language model for gift ideas directly can return items that do not exist, ignore the budget, or cannot be compared. The README states the alternative: \"Instead of simply asking an AI to invent gift ideas, GiftBro first ranks real catalogue items.\"",
+      "investigation": "A recipient profile carries many separate signals: interests, occasion, relationship, personality, style, budget and things to avoid. Some are constraints and some are preferences. That points to filtering on the constraints first, scoring each preference separately, and keeping the model out of the ranking.",
+      "approach": [
+        "Items on the avoid list are removed, but only while some candidates remain. Items within budget form the pool, and if nothing fits, the cheapest items are used instead, so the list is never empty.",
+        "TF-IDF over words and word pairs, with cosine similarity, compares the profile with each item, and separate scores measure interest, occasion, relationship, personality, style, personalization and budget fit.",
+        "Fixed weights combine the scores into one ranking (semantic 0.20, interest 0.20, occasion 0.15, relationship 0.12, personality 0.10, budget 0.10, style 0.08, personalization 0.05), and the shortlist favours different categories before repeating one.",
+        "Gemini runs only when the user asks. It receives the ranked candidates, is told to recommend only those, and must answer in a fixed response schema. If it is unavailable or fails, nothing is returned and the ranking stands."
+      ],
+      "result": [
+        "A ranked shortlist of real catalogue items, with every score readable, exists before any text is generated.",
+        "Generation is optional and limited to explaining, personalizing and presenting candidates the recommender has already chosen."
+      ],
+      "takeaway": "Keep the decision with a deterministic system, and give the language model a narrow job whose output can be checked.",
+      "contribution": "TF-IDF, cosine similarity, weighted recommendation scoring and Gemini personalization.",
+      "contribution_status": "approved",
+      "sources": [
+        {
+          "label": "Filtering, scoring and weighted ranking",
+          "path": "recommender.py",
+          "url": "https://github.com/singhaasveer-lab/giftbro-ai/blob/main/recommender.py"
+        },
+        {
+          "label": "Gemini limited to the supplied candidates",
+          "path": "gemini_service.py",
+          "url": "https://github.com/singhaasveer-lab/giftbro-ai/blob/main/gemini_service.py"
+        },
+        {
+          "label": "Gemini only on request",
+          "path": "app.py",
+          "url": "https://github.com/singhaasveer-lab/giftbro-ai/blob/main/app.py"
+        },
+        {
+          "label": "README: rank real items first",
+          "path": "README.md",
+          "url": "https://github.com/singhaasveer-lab/giftbro-ai/blob/main/README.md"
+        }
+      ]
+    }
+  ]
+}

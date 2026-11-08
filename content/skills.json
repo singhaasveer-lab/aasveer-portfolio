@@ -1,0 +1,88 @@
+{
+  "review_notes": [
+    "Eight categories, in resume order, matching the resume's skill lines, Languages included (docs/TECHNICAL_DECISIONS.md, D30)."
+  ],
+  "groups": [
+    {
+      "category": "Languages",
+      "skills": ["Python", "SQL", "C/C++", "JavaScript", "TypeScript"]
+    },
+    {
+      "category": "AI / ML",
+      "skills": [
+        "Machine Learning",
+        "Scikit-learn",
+        "Feature Engineering",
+        "Recommendation Systems",
+        "Forecasting (Prophet)"
+      ]
+    },
+    {
+      "category": "Generative AI & NLP",
+      "skills": [
+        "LLMs",
+        "Generative AI",
+        "RAG",
+        "Prompt Engineering",
+        "NLP",
+        "Text Vectorization (TF-IDF)",
+        "Cosine Similarity",
+        "Information Retrieval",
+        "AI Output Evaluation"
+      ]
+    },
+    {
+      "category": "AI Models & Platforms",
+      "skills": [
+        "OpenAI API",
+        "Google Gemini API (GenAI SDK)",
+        "Anthropic Claude API",
+        "Claude Code",
+        "Hybrid ML + LLM pipelines"
+      ]
+    },
+    {
+      "category": "Backend & APIs",
+      "skills": [
+        "FastAPI",
+        "Flask",
+        "Streamlit",
+        "REST APIs",
+        "JWT Authentication",
+        "SQLAlchemy",
+        "Python-dotenv"
+      ]
+    },
+    {
+      "category": "Data & Databases",
+      "skills": [
+        "Pandas",
+        "NumPy",
+        "Matplotlib",
+        "Data Analysis",
+        "OCR",
+        "PDF Parsing (PyPDF2)",
+        "SQLite",
+        "MySQL",
+        "PostgreSQL"
+      ]
+    },
+    {
+      "category": "Frontend",
+      "skills": ["React", "TypeScript", "Vite", "Tailwind CSS", "HTML", "CSS", "React Context API"]
+    },
+    {
+      "category": "Tools & Concepts",
+      "skills": [
+        "Git",
+        "GitHub",
+        "Jupyter Notebook",
+        "Google Colab",
+        "OOP",
+        "DBMS",
+        "Data Structures",
+        "Problem Solving"
+      ]
+    }
+  ]
+}

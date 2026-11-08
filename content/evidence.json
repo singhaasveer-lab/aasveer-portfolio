@@ -1,0 +1,579 @@
+{
+  "review_notes": [
+    "Every evidence item was checked against the project's local source and against the public file on the main branch of its repository. url is set only when the public file contains the checked phrase.",
+    "quick_view lists the three strongest records: each has a confirmed or stated contribution and inspected public source.",
+    "Contributions: StudyForge AI, Wingman AI, GiftBro AI and SmartQueue AI show the owner's confirmed wording. InterviewIQ and PennyBloom are \"unconfirmed\": their project evidence is shown, but no contribution is claimed."
+  ],
+  "records": [
+    {
+      "id": "rag",
+      "capability": "Retrieval-Augmented Generation",
+      "summary": "Answers grounded in retrieved source text, not in a model's memory.",
+      "applications": [
+        {
+          "project": "studyforge-ai",
+          "implementation": "PDF chunking, TF-IDF retrieval and source-grounded answers",
+          "context": "Uploaded PDFs are split into overlapping, page-numbered chunks. A question retrieves up to four chunks by TF-IDF and cosine similarity, and Gemini answers from them. Without an API key, the retrieved text is shown and labelled instead.",
+          "contribution": "RAG, study planning, quizzes, NLP, FastAPI and SQLite.",
+          "contribution_status": "approved",
+          "insight": "Designs for the failure case: when the model is unavailable the feature still works, and says plainly what it is showing.",
+          "evidence": [
+            {
+              "label": "Chunking with overlap",
+              "kind": "source",
+              "path": "backend/app/main.py",
+              "inspected": true,
+              "url": "https://github.com/akshita-sharda/STUDYFORGE-AI-/blob/main/backend/app/main.py"
+            },
+            {
+              "label": "TF-IDF retrieval",
+              "kind": "source",
+              "path": "backend/app/main.py",
+              "inspected": true,
+              "url": "https://github.com/akshita-sharda/STUDYFORGE-AI-/blob/main/backend/app/main.py"
+            },
+            {
+              "label": "Source-only fallback",
+              "kind": "source",
+              "path": "backend/app/main.py",
+              "inspected": true,
+              "url": "https://github.com/akshita-sharda/STUDYFORGE-AI-/blob/main/backend/app/main.py"
+            },
+            {
+              "label": "Test: source-only chat mode",
+              "kind": "test",
+              "path": "backend/tests/test_chat.py",
+              "inspected": true,
+              "url": "https://github.com/akshita-sharda/STUDYFORGE-AI-/blob/main/backend/tests/test_chat.py"
+            }
+          ]
+        },
+        {
+          "project": "wingman-ai",
+          "implementation": "A local knowledge base searched with TF-IDF",
+          "context": "Hand-written guidance entries are vectorized with TF-IDF over words and word pairs, and the three closest to the conversation are returned with their scores.",
+          "contribution": "Backend, local RAG and NLP, OCR, Reply Lab and Dating Tips.",
+          "contribution_status": "approved",
+          "insight": "Keeps retrieval local, small and inspectable, with every result traceable to a written entry.",
+          "evidence": [
+            {
+              "label": "TF-IDF and cosine retrieval",
+              "kind": "source",
+              "path": "core/rag.py",
+              "inspected": true,
+              "url": "https://github.com/singhaasveer-lab/wingman_ai/blob/main/core/rag.py"
+            },
+            {
+              "label": "The knowledge base itself",
+              "kind": "source",
+              "path": "knowledge_base.json",
+              "inspected": true,
+              "url": "https://github.com/singhaasveer-lab/wingman_ai/blob/main/knowledge_base.json"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "llm",
+      "capability": "Generative AI & LLM Applications",
+      "summary": "Language models used inside systems that check what they produce.",
+      "applications": [
+        {
+          "project": "studyforge-ai",
+          "implementation": "Gemini flashcards and quizzes, validated, with a local fallback",
+          "context": "Gemini reads the PDF and returns flashcards or quiz questions as JSON. Each item is checked field by field, repeats are dropped, and when the provider is busy a quiz is built from the document's own sentences.",
+          "contribution": "RAG, study planning, quizzes, NLP, FastAPI and SQLite.",
+          "contribution_status": "approved",
+          "insight": "Treats model output as untrusted input: validated, de-duplicated and replaceable.",
+          "evidence": [
+            {
+              "label": "Generation and validation",
+              "kind": "source",
+              "path": "backend/app/main.py",
+              "inspected": true,
+              "url": "https://github.com/akshita-sharda/STUDYFORGE-AI-/blob/main/backend/app/main.py"
+            },
+            {
+              "label": "Local quiz fallback",
+              "kind": "source",
+              "path": "backend/app/main.py",
+              "inspected": true,
+              "url": "https://github.com/akshita-sharda/STUDYFORGE-AI-/blob/main/backend/app/main.py"
+            },
+            {
+              "label": "Test: AI reliability",
+              "kind": "test",
+              "path": "backend/tests/test_ai_reliability.py",
+              "inspected": true,
+              "url": "https://github.com/akshita-sharda/STUDYFORGE-AI-/blob/main/backend/tests/test_ai_reliability.py"
+            }
+          ]
+        },
+        {
+          "project": "giftbro-ai",
+          "implementation": "Gemini personalization over a shortlist it cannot change",
+          "context": "A deterministic recommender ranks real catalogue items first. Gemini then explains the best fit and suggests a message, constrained by a response schema and told to use only the supplied candidates.",
+          "contribution": "TF-IDF, cosine similarity, weighted recommendation scoring and Gemini personalization.",
+          "contribution_status": "approved",
+          "insight": "Keeps the decision with the deterministic system and gives the language model a narrow, checkable job.",
+          "evidence": [
+            {
+              "label": "Prompt limited to supplied candidates",
+              "kind": "source",
+              "path": "gemini_service.py",
+              "inspected": true,
+              "url": "https://github.com/singhaasveer-lab/giftbro-ai/blob/main/gemini_service.py"
+            },
+            {
+              "label": "Structured response schema",
+              "kind": "source",
+              "path": "gemini_service.py",
+              "inspected": true,
+              "url": "https://github.com/singhaasveer-lab/giftbro-ai/blob/main/gemini_service.py"
+            }
+          ]
+        },
+        {
+          "project": "interviewiq",
+          "implementation": "Interview generation and AI evaluation",
+          "context": "Gemini generates role-specific questions, then a second call scores every answer and four separate dimensions. Question counts, option sets and every score range are validated before use.",
+          "contribution_status": "unconfirmed",
+          "insight": "Uses a model as a judge but bounds it: malformed or out-of-range output is rejected.",
+          "evidence": [
+            {
+              "label": "Question generation",
+              "kind": "source",
+              "path": "backend/app/services/ai_service.py",
+              "inspected": true,
+              "url": "https://github.com/singhaasveer-lab/InterviewIQ/blob/main/backend/app/services/ai_service.py"
+            },
+            {
+              "label": "AI evaluation with range checks",
+              "kind": "source",
+              "path": "backend/app/services/ai_service.py",
+              "inspected": true,
+              "url": "https://github.com/singhaasveer-lab/InterviewIQ/blob/main/backend/app/services/ai_service.py"
+            },
+            {
+              "label": "Generate and evaluate endpoints",
+              "kind": "api",
+              "path": "backend/app/routes/interview.py",
+              "inspected": true,
+              "url": "https://github.com/singhaasveer-lab/InterviewIQ/blob/main/backend/app/routes/interview.py"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "nlp",
+      "capability": "Natural Language Processing",
+      "summary": "Turning conversation and study text into signals software can act on.",
+      "applications": [
+        {
+          "project": "wingman-ai",
+          "implementation": "Conversation signal analysis",
+          "context": "A conversation is tokenized and scored separately for sentiment, questions, reciprocity and energy. Fixed weights combine the signals into a next move and reply strategies.",
+          "contribution": "Backend, local RAG and NLP, OCR, Reply Lab and Dating Tips.",
+          "contribution_status": "approved",
+          "insight": "Chooses transparent signals over an opaque model, so every result can be explained.",
+          "evidence": [
+            {
+              "label": "Sentiment from word lists",
+              "kind": "source",
+              "path": "core/coach.py",
+              "inspected": true,
+              "url": "https://github.com/singhaasveer-lab/wingman_ai/blob/main/core/coach.py"
+            },
+            {
+              "label": "Full analysis",
+              "kind": "source",
+              "path": "core/coach.py",
+              "inspected": true,
+              "url": "https://github.com/singhaasveer-lab/wingman_ai/blob/main/core/coach.py"
+            }
+          ]
+        },
+        {
+          "project": "studyforge-ai",
+          "implementation": "Duplicate-question detection",
+          "context": "Study questions are reduced to meaningful words and compared by overlap, so generated material does not ask the same idea twice.",
+          "contribution": "RAG, study planning, quizzes, NLP, FastAPI and SQLite.",
+          "contribution_status": "approved",
+          "insight": "Applies simple NLP where it measurably improves output quality.",
+          "evidence": [
+            {
+              "label": "Word sets and similarity",
+              "kind": "source",
+              "path": "backend/app/main.py",
+              "inspected": true,
+              "url": "https://github.com/akshita-sharda/STUDYFORGE-AI-/blob/main/backend/app/main.py"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ocr",
+      "capability": "OCR & Document Intelligence",
+      "summary": "Reading the text inside images and documents.",
+      "applications": [
+        {
+          "project": "wingman-ai",
+          "implementation": "Screenshot intelligence",
+          "context": "Chat screenshots are read with Tesseract OCR, then passed into the same signal analysis and retrieval as typed text, through a dedicated API endpoint.",
+          "contribution": "Backend, local RAG and NLP, OCR, Reply Lab and Dating Tips.",
+          "contribution_status": "approved",
+          "insight": "Connects an OCR step to a downstream pipeline instead of stopping at extracted text.",
+          "evidence": [
+            {
+              "label": "Tesseract OCR",
+              "kind": "source",
+              "path": "core/ocr.py",
+              "inspected": true,
+              "url": "https://github.com/singhaasveer-lab/wingman_ai/blob/main/core/ocr.py"
+            },
+            {
+              "label": "Screenshot endpoint",
+              "kind": "api",
+              "path": "api.py",
+              "inspected": true,
+              "url": "https://github.com/singhaasveer-lab/wingman_ai/blob/main/api.py"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "recommendation",
+      "capability": "Recommendation Systems",
+      "summary": "Ranking real items against a person's profile, explainably.",
+      "applications": [
+        {
+          "project": "giftbro-ai",
+          "implementation": "Hybrid content-based gift ranking",
+          "context": "Gifts over budget or on the avoid list are removed. The rest are scored with TF-IDF and cosine similarity against interests plus separate match scores, combined with fixed weights into one ranking.",
+          "contribution": "TF-IDF, cosine similarity, weighted recommendation scoring and Gemini personalization.",
+          "contribution_status": "approved",
+          "insight": "Builds a ranking whose every score can be read and explained, before any generation happens.",
+          "evidence": [
+            {
+              "label": "Candidate filtering",
+              "kind": "source",
+              "path": "recommender.py",
+              "inspected": true,
+              "url": "https://github.com/singhaasveer-lab/giftbro-ai/blob/main/recommender.py"
+            },
+            {
+              "label": "Similarity scoring",
+              "kind": "source",
+              "path": "recommender.py",
+              "inspected": true,
+              "url": "https://github.com/singhaasveer-lab/giftbro-ai/blob/main/recommender.py"
+            },
+            {
+              "label": "Weighted ranking",
+              "kind": "source",
+              "path": "recommender.py",
+              "inspected": true,
+              "url": "https://github.com/singhaasveer-lab/giftbro-ai/blob/main/recommender.py"
+            },
+            {
+              "label": "Recommendation endpoint",
+              "kind": "api",
+              "path": "api.py",
+              "inspected": true,
+              "url": "https://github.com/singhaasveer-lab/giftbro-ai/blob/main/api.py"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "backend",
+      "capability": "Backend & API Engineering",
+      "summary": "Services and endpoints that other software can depend on.",
+      "applications": [
+        {
+          "project": "studyforge-ai",
+          "implementation": "A FastAPI backend for documents, chat and study tools",
+          "context": "One FastAPI service handles accounts, PDF uploads, chat, flashcards, quizzes and planning, with an automated test suite for its API.",
+          "contribution": "RAG, study planning, quizzes, NLP, FastAPI and SQLite.",
+          "contribution_status": "approved",
+          "insight": "Delivers a complete, tested API rather than a single endpoint.",
+          "evidence": [
+            {
+              "label": "Upload endpoint",
+              "kind": "api",
+              "path": "backend/app/main.py",
+              "inspected": true,
+              "url": "https://github.com/akshita-sharda/STUDYFORGE-AI-/blob/main/backend/app/main.py"
+            },
+            {
+              "label": "API tests",
+              "kind": "test",
+              "path": "backend/tests/test_api.py",
+              "inspected": true,
+              "url": "https://github.com/akshita-sharda/STUDYFORGE-AI-/blob/main/backend/tests/test_api.py"
+            }
+          ]
+        },
+        {
+          "project": "wingman-ai",
+          "implementation": "A REST API over the analysis core",
+          "context": "The same analysis is exposed over HTTP for text and for screenshots, separately from the Streamlit interface.",
+          "contribution": "Backend, local RAG and NLP, OCR, Reply Lab and Dating Tips.",
+          "contribution_status": "approved",
+          "insight": "Separates the core logic from any one interface.",
+          "evidence": [
+            {
+              "label": "Analyze endpoints",
+              "kind": "api",
+              "path": "api.py",
+              "inspected": true,
+              "url": "https://github.com/singhaasveer-lab/wingman_ai/blob/main/api.py"
+            }
+          ]
+        },
+        {
+          "project": "pennybloom",
+          "implementation": "A thin FastAPI layer over one Python core",
+          "context": "The web API calls the same finance core as the command-line app, and holds no business logic of its own, so the two interfaces cannot disagree.",
+          "contribution_status": "unconfirmed",
+          "insight": "Puts every rule in one place and keeps the API thin.",
+          "evidence": [
+            {
+              "label": "FastAPI application",
+              "kind": "api",
+              "path": "backend/app/main.py",
+              "inspected": true,
+              "url": "https://github.com/singhaasveer-lab/PennyBloom/blob/main/backend/app/main.py"
+            },
+            {
+              "label": "API tests",
+              "kind": "test",
+              "path": "tests/test_api.py",
+              "inspected": true,
+              "url": "https://github.com/singhaasveer-lab/PennyBloom/blob/main/tests/test_api.py"
+            }
+          ]
+        },
+        {
+          "project": "interviewiq",
+          "implementation": "Routed FastAPI services",
+          "context": "Interviews, analytics, the knowledge base and authentication are separate routers mounted on one application.",
+          "contribution_status": "unconfirmed",
+          "insight": "Organizes a larger API into clear modules.",
+          "evidence": [
+            {
+              "label": "Router registration",
+              "kind": "api",
+              "path": "backend/app/main.py",
+              "inspected": true,
+              "url": "https://github.com/singhaasveer-lab/InterviewIQ/blob/main/backend/app/main.py"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "database",
+      "capability": "Database Integration",
+      "summary": "Data models and storage that the application's features rely on.",
+      "applications": [
+        {
+          "project": "studyforge-ai",
+          "implementation": "SQLite storage for documents, chunks and study material",
+          "context": "Documents, page-numbered chunks, flashcards, quizzes and quiz attempts are stored in SQLite and queried directly.",
+          "contribution": "RAG, study planning, quizzes, NLP, FastAPI and SQLite.",
+          "contribution_status": "approved",
+          "insight": "Designs storage around how retrieval and study features read it.",
+          "evidence": [
+            {
+              "label": "Chunk table",
+              "kind": "schema",
+              "path": "backend/app/main.py",
+              "inspected": true,
+              "url": "https://github.com/akshita-sharda/STUDYFORGE-AI-/blob/main/backend/app/main.py"
+            }
+          ]
+        },
+        {
+          "project": "wingman-ai",
+          "implementation": "SQLite history and saved items",
+          "context": "Analyses and saved replies are kept in SQLite for later review.",
+          "contribution": "Backend, local RAG and NLP, OCR, Reply Lab and Dating Tips.",
+          "contribution_status": "approved",
+          "insight": "Gives the analysis memory without a server database.",
+          "evidence": [
+            {
+              "label": "Tables",
+              "kind": "schema",
+              "path": "core/db.py",
+              "inspected": true,
+              "url": "https://github.com/singhaasveer-lab/wingman_ai/blob/main/core/db.py"
+            }
+          ]
+        },
+        {
+          "project": "interviewiq",
+          "implementation": "SQLAlchemy models, SQLite locally and PostgreSQL in Docker",
+          "context": "Users, interviews, evaluations and knowledge-base documents are SQLAlchemy models. Local development uses SQLite, and the Docker setup runs PostgreSQL.",
+          "contribution_status": "unconfirmed",
+          "insight": "Uses an ORM so the same models run on two databases.",
+          "evidence": [
+            {
+              "label": "Database configuration",
+              "kind": "schema",
+              "path": "backend/app/database.py",
+              "inspected": true,
+              "url": "https://github.com/singhaasveer-lab/InterviewIQ/blob/main/backend/app/database.py"
+            },
+            {
+              "label": "Knowledge-base models",
+              "kind": "schema",
+              "path": "backend/app/models/rag.py",
+              "inspected": true,
+              "url": "https://github.com/singhaasveer-lab/InterviewIQ/blob/main/backend/app/models/rag.py"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "integration",
+      "capability": "Frontend & Backend Integration",
+      "summary": "Interfaces and services working as one application.",
+      "applications": [
+        {
+          "project": "interviewiq",
+          "implementation": "An Express server in front of FastAPI",
+          "context": "A React app is served by Express and Vite, which forward API calls to the FastAPI backend, so the browser talks to a single origin.",
+          "contribution_status": "unconfirmed",
+          "insight": "Solves cross-origin and deployment friction at the architecture level.",
+          "evidence": [
+            {
+              "label": "API forwarding",
+              "kind": "source",
+              "path": "server.ts",
+              "inspected": true,
+              "url": "https://github.com/singhaasveer-lab/InterviewIQ/blob/main/server.ts"
+            }
+          ]
+        },
+        {
+          "project": "pennybloom",
+          "implementation": "A React client for the finance API",
+          "context": "The React and TypeScript web app reads and writes through one typed API client for the FastAPI layer.",
+          "contribution_status": "unconfirmed",
+          "insight": "Keeps the client's contract with the API in one place.",
+          "evidence": [
+            {
+              "label": "Typed API client",
+              "kind": "source",
+              "path": "frontend/src/api.ts",
+              "inspected": true,
+              "url": "https://github.com/singhaasveer-lab/PennyBloom/blob/main/frontend/src/api.ts"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "data",
+      "capability": "Data Processing & Integrity",
+      "summary": "Turning records into reliable figures, and keeping them safe.",
+      "applications": [
+        {
+          "project": "pennybloom",
+          "implementation": "Reports, trends and crash-safe storage",
+          "context": "Transactions become monthly summaries, category breakdowns, a least-squares trend and a stated next-month estimate. Files are written atomically and backups carry SHA-256 checksums.",
+          "contribution_status": "unconfirmed",
+          "insight": "Treats personal data with care: exact decimals, atomic writes and verified backups.",
+          "evidence": [
+            {
+              "label": "Reports and estimate",
+              "kind": "source",
+              "path": "finance_tracker/reports.py",
+              "inspected": true,
+              "url": "https://github.com/singhaasveer-lab/PennyBloom/blob/main/finance_tracker/reports.py"
+            },
+            {
+              "label": "Atomic writes",
+              "kind": "source",
+              "path": "finance_tracker/file_handler.py",
+              "inspected": true,
+              "url": "https://github.com/singhaasveer-lab/PennyBloom/blob/main/finance_tracker/file_handler.py"
+            },
+            {
+              "label": "Report tests",
+              "kind": "test",
+              "path": "tests/test_reports.py",
+              "inspected": true,
+              "url": "https://github.com/singhaasveer-lab/PennyBloom/blob/main/tests/test_reports.py"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "queue",
+      "capability": "Queue Management Logic",
+      "summary": "Rule-based logic for digital queues and counters. No AI model is involved.",
+      "applications": [
+        {
+          "project": "smartqueue-ai",
+          "implementation": "Tokens, positions, wait estimates and dispatch",
+          "context": "Visitors join and receive numbered tokens. Waiting time and backlog are estimated from token timestamps and open counters, and staff call the next token to a specific counter.",
+          "contribution": "Queue management, token generation, queue-position information, wait-time estimation and staff dispatch.",
+          "contribution_status": "approved",
+          "insight": "Models a real operational process with clear, rule-based logic.",
+          "evidence": [
+            {
+              "label": "Token generation",
+              "kind": "source",
+              "path": "src/context/QueueContext.tsx",
+              "inspected": true,
+              "url": "https://github.com/singhaasveer-lab/smartqueue-ai/blob/main/src/context/QueueContext.tsx"
+            },
+            {
+              "label": "Call next to a counter",
+              "kind": "source",
+              "path": "src/context/QueueContext.tsx",
+              "inspected": true,
+              "url": "https://github.com/singhaasveer-lab/smartqueue-ai/blob/main/src/context/QueueContext.tsx"
+            },
+            {
+              "label": "Wait and backlog estimates",
+              "kind": "source",
+              "path": "src/utils/aiEngine.ts",
+              "inspected": true,
+              "url": "https://github.com/singhaasveer-lab/smartqueue-ai/blob/main/src/utils/aiEngine.ts"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "quick_view": [
+    {
+      "record": "rag",
+      "project": "studyforge-ai",
+      "worked_on": "The RAG pipeline: PDF chunking, TF-IDF retrieval and source-grounded answers with an honest fallback.",
+      "why": "Retrieval quality and graceful failure are what make an AI study tool trustworthy, and both are visible in the code and its tests."
+    },
+    {
+      "record": "ocr",
+      "project": "wingman-ai",
+      "worked_on": "The screenshot-to-insight path: OCR, NLP signal analysis and local retrieval behind a REST API.",
+      "why": "It joins three separate techniques into one pipeline, each stage inspectable on its own."
+    },
+    {
+      "record": "recommendation",
+      "project": "giftbro-ai",
+      "worked_on": "A hybrid recommender: filtering, TF-IDF similarity and weighted scoring, with Gemini limited to explaining the result.",
+      "why": "It keeps the decision deterministic and explainable while still using a language model where it helps."
+    }
+  ]
+}

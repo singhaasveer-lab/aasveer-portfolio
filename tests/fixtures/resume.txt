@@ -1,0 +1,79 @@
+# Redacted resume text fixture (Resume v3). Contact line (phone, email) removed. Used only by tests.
+AASVEER SINGH
+ Results-driven AI/ML Engineer | Generative AI, LLMs & RAG | Python, SQL, FastAPI
+PROFESSIONAL SUMMARY
+Results-driven AI/ML Engineer who builds end-to-end AI applications with Python, SQL and FastAPI. Skilled in Machine
+Learning, NLP, Generative AI, LLMs, RAG and prompt engineering, with a focus on recommendation engines and
+OCR-based document intelligence. Experienced in integrating LLM APIs (OpenAI, Gemini, Claude), designing multi-stage
+AI pipelines, serving them through REST APIs and evaluating AI outputs.
+TECHNICAL SKILLS
+Languages: Python, SQL, C/C++, JavaScript, TypeScript
+AI / ML: Machine Learning, Scikit-learn, Feature Engineering, Recommendation Systems, Forecasting (Prophet)
+Generative AI & NLP: LLMs, Generative AI, RAG, Prompt Engineering, NLP, Text Vectorization (TF-IDF), Cosine Similarity,
+Information Retrieval, AI Output Evaluation
+AI Models & Platforms: OpenAI API, Google Gemini API (GenAI SDK), Anthropic Claude API, Claude Code, Hybrid ML +
+LLM pipelines
+Backend & APIs: FastAPI, Flask, Streamlit, REST APIs, JWT Authentication, SQLAlchemy, Python-dotenv
+Data & Databases: Pandas, NumPy, Matplotlib, Data Analysis, OCR, PDF Parsing (PyPDF2), SQLite, MySQL, PostgreSQL
+Frontend: React, TypeScript, Vite, Tailwind CSS, HTML, CSS, React Context API
+Tools & Concepts: Git, GitHub, Jupyter Notebook, Google Colab, OOP, DBMS, Data Structures, Problem Solving
+PROJECTS
+InterviewIQ | AI-Powered Mock Interview Platform 2026
+GitHub: github.com/singhaasveer-lab/InterviewIQ
+Built a full-stack mock interview platform where students practice technical, behavioral (STAR) and system-design
+interviews, with adaptive difficulty and both MCQ and open-ended questions generated on demand by Gemini.
+Designed AI evaluation that scores each answer on technical depth, communication clarity, problem solving and executive
+confidence, with model answers, strengths, weak spots and a prep roadmap.
+Added a Resume ATS Scanner, a Job Description Analyzer with match scoring, a RAG knowledge base with semantic
+search, a voice interview room (speech-to-text) and a live coding sandbox that evaluates time/space complexity.
+Tech Stack: React 19, TypeScript, Tailwind CSS, Python, FastAPI, SQLAlchemy, SQLite, JWT Authentication, Gemini API, Vite,
+Express
+Wingman | AI-Powered Conversation Intelligence Platform (RAG + NLP) Aug 2026 - Sep 2026
+GitHub: github.com/singhaasveer-lab/wingman_ai
+Co-built an AI platform that reads chat screenshots with OCR and analyzes interaction signals such as warmth, reciprocity
+and engagement, turning them into next-step recommendations, reply strategies and date plans.
+Designed a multi-stage pipeline: Screenshot OCR, NLP Signal Analysis, Conversation DNA profiling, RAG Retrieval,
+Decision Brief and Reply Strategies.
+Implemented a local RAG knowledge base using TF-IDF vectorization and cosine-similarity retrieval, with SQLite
+persistence, a FastAPI REST backend and a Streamlit interface.
+Tech Stack: Python, FastAPI, Streamlit, OCR, NLP, RAG, TF-IDF, Cosine Similarity, SQLite, REST APIs
+GiftBro AI | Hybrid ML + Generative AI Gift Recommendation System Jul 2026 - Aug 2026
+GitHub: github.com/singhaasveer-lab/giftbro-ai
+Built a hybrid recommender that ranks real catalogue items before any generation happens: candidates are filtered and
+scored with TF-IDF, cosine similarity and weighted scoring against the recipient's relationship, occasion, interests,
+personality, budget and things to avoid.
+Used the Gemini LLM as a personalization layer that explains why each gift fits, how to personalize and present it, and drafts
+a message to include, so the AI never invents products.
+Exposed the pipeline through a FastAPI backend with SQLite-based history and a Streamlit frontend.
+Tech Stack: Python, Scikit-learn, Pandas, TF-IDF, Cosine Similarity, FastAPI, Streamlit, SQLite, Gemini API
+SmartQueue AI | Intelligent Queue Management & Analytics System 2026
+GitHub: github.com/singhaasveer-lab/smartqueue-ai
+Built a digital queue system with real-time token generation, live queue position and wait-time estimates, multi-counter staff
+dispatch, priority handling and a public live queue display.
+Added AI queue intelligence for congestion monitoring, bottleneck detection, queue clearance estimation and traffic surge
+simulation, plus analytics dashboards with CSV and JSON export.
+Tech Stack: React, TypeScript, Vite, Tailwind CSS, React Context API, Lucide React
+StudyForge AI | AI-Powered Study Platform for CS Students 2026
+GitHub: github.com/akshita-sharda/STUDYFORGE-AI-
+Co-built a full-stack study platform where students upload PDFs and get source-grounded answers through RAG, with
+Gemini-generated flashcards and quizzes and a local RAG fallback that shows retrieved source text when no API key is set.
+
+Built study modes (explain simply, hint, debug code, viva practice), a subject library, a revision tracker, a planner and saved
+conversations, with student accounts using signed tokens and hashed passwords.
+Built the FastAPI backend and Next.js frontend, and wrote an automated test suite for the API, chat, study and planner
+features.
+Tech Stack: Python, FastAPI, Next.js, React, RAG, Gemini API, pytest
+EXPERIENCE & LEADERSHIP
+Campus Ambassador | Aspire Institute India Dec 2025 - Present
+Represent the organization on campus and drive student participation through peer engagement and outreach.
+Coordinate with teams on events and campaigns, strengthening communication and stakeholder management skills.
+Member | Entrepreneurship Development Cell (EDC), Amritsar Group of Colleges
+EDUCATION
+B.Tech, Computer Science & Engineering (AI/ML), Amritsar Group of Colleges 2023 - 2027
+Class XII, Shri Guru Harkishan Sen. Sec. School (2023) | Class X, Shri Guru Harkishan Public School (2021)
+CERTIFICATIONS
+Anthropic Claude Academy: Claude Code 101, Building with the Claude API, Claude Platform 101, Claude 101
+IBM SkillsBuild: Introduction to Large Language Models, Machine Learning, AI Practitioner: Ready to Use AI
+Google Cloud Skills Boost: Introduction to Generative AI | Cisco: Introduction to Modern AI
+Microsoft Learn: Introduction to Prompt Engineering with GitHub, Azure Database for PostgreSQL: Vector Search
+HP LIFE: Critical Thinking in the AI Era

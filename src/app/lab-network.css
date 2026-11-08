@@ -1,0 +1,378 @@
+/*
+ * The AI Systems Laboratory's capability map: capabilities on one arc, projects on the other,
+ * joined by curved lines, with the reading panel beside it. Tokens come from globals.css.
+ */
+@layer components {
+  .explore {
+    --dot: 12px;
+    display: grid;
+    gap: 40px;
+    width: 100%;
+  }
+  @media (min-width: 900px) {
+    .explore {
+      --dot: 20px;
+    }
+  }
+  @media (min-width: 1100px) {
+    .explore {
+      grid-template-columns: minmax(0, 58fr) minmax(0, 42fr);
+      gap: clamp(20px, 2vw, 32px);
+      align-items: start;
+    }
+  }
+  .explore-field {
+    position: relative;
+    height: clamp(620px, 165vw, 700px);
+    overflow-x: clip;
+  }
+  @media (min-width: 900px) {
+    .explore-field {
+      height: clamp(680px, 88vh, 820px);
+      overflow-x: visible;
+    }
+  }
+  @media (min-width: 1100px) {
+    /* The panel can outgrow the network, which stays in view instead of being left behind. */
+    .explore-field {
+      position: sticky;
+      top: calc(var(--header-h) + 16px);
+    }
+  }
+  /* A faint computational plate, so the network sits in a space of its own. */
+  .explore-field::before {
+    content: "";
+    position: absolute;
+    inset: 0 -4px;
+    background-image:
+      linear-gradient(rgb(200 214 255 / 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(200 214 255 / 0.05) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: radial-gradient(62% 58% at 50% 50%, #000, transparent);
+    pointer-events: none;
+  }
+  .explore-lines {
+    position: absolute;
+    inset: 0;
+    overflow: visible;
+    pointer-events: none;
+  }
+  .explore-line,
+  .explore-line-lit {
+    fill: none;
+  }
+  .explore-line {
+    stroke: var(--line-strong);
+    stroke-width: 1.4;
+    stroke-opacity: 0.9;
+    transition: stroke-opacity var(--dur-fast) var(--ease-out);
+  }
+  .explore-lines:has(.explore-line[data-on]) .explore-line:not([data-on]) {
+    stroke-opacity: 0.35;
+  }
+  .explore-line-lit {
+    stroke: var(--accent);
+    stroke-width: 3;
+    filter: drop-shadow(0 0 7px var(--accent));
+  }
+  .explore-dot {
+    flex: none;
+    width: var(--dot);
+    height: var(--dot);
+    border: 1px solid var(--text-muted);
+    border-radius: 50%;
+    background: var(--ink);
+    transition:
+      transform var(--dur-base) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out),
+      background-color var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur-base) var(--ease-out);
+  }
+  .explore-topics,
+  .explore-projects {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  /* A layer over the capabilities, which must stay pressable: only its nodes take the pointer. */
+  .explore-projects {
+    pointer-events: none;
+  }
+  .explore-project {
+    display: flex;
+    align-items: center;
+    gap: inherit;
+    min-height: 44px;
+    padding: 4px 6px 4px 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    white-space: nowrap;
+    text-align: left;
+    cursor: pointer;
+    pointer-events: auto;
+  }
+  .explore-project:hover {
+    color: var(--text);
+  }
+  .explore-project:hover .explore-dot {
+    border-color: var(--accent);
+    transform: scale(1.15);
+  }
+  .explore-project[aria-pressed="true"] {
+    color: var(--accent-strong);
+  }
+  .explore-project[aria-pressed="true"] .explore-dot {
+    background: var(--accent-strong);
+    box-shadow:
+      0 0 0 9px color-mix(in srgb, var(--accent) 24%, transparent),
+      0 0 30px var(--accent);
+    transform: scale(1.2);
+  }
+  .explore-topics li {
+    position: absolute;
+    top: var(--y);
+    right: var(--edge);
+    width: calc(100% - var(--edge));
+    transform: translateY(-50%);
+  }
+  .explore-topic {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    width: calc(100% + var(--dot) / 2);
+    min-height: 48px;
+    margin-right: calc(var(--dot) / -2);
+    padding: 4px 0;
+    border: 0;
+    background: none;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 0.84rem;
+    line-height: 1.25;
+    text-align: right;
+    cursor: pointer;
+    transition: color var(--dur-fast) var(--ease-out);
+  }
+  .explore-topic:hover,
+  .explore-topic[data-focus] {
+    color: var(--text);
+  }
+  .explore-topic:hover .explore-dot {
+    border-color: var(--accent);
+    transform: scale(1.15);
+  }
+  .explore-topic[data-focus] .explore-dot {
+    border-color: var(--accent);
+    background: var(--accent);
+  }
+  .explore-topic[aria-pressed="true"] {
+    color: var(--accent-strong);
+  }
+  .explore-topic[aria-pressed="true"] .explore-dot {
+    background: var(--accent-strong);
+    box-shadow:
+      0 0 0 9px color-mix(in srgb, var(--accent) 24%, transparent),
+      0 0 30px var(--accent);
+    transform: scale(1.2);
+  }
+  .explore-projects li {
+    position: absolute;
+    top: var(--y);
+    left: var(--x);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: calc(var(--dot) / -2);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    white-space: nowrap;
+    color: var(--text-muted);
+    transform: translateY(-50%);
+    transition: color var(--dur-fast) var(--ease-out);
+  }
+  .explore-projects li[data-on] {
+    color: var(--text);
+  }
+  .explore-projects li[data-on] .explore-project:not([aria-pressed="true"]) .explore-dot {
+    border-color: var(--accent);
+    background: var(--accent);
+    box-shadow:
+      0 0 0 6px color-mix(in srgb, var(--accent) 20%, transparent),
+      0 0 18px var(--accent-glow);
+    transform: scale(1.1);
+  }
+  @media (max-width: 379px) {
+    /* The narrowest phones: long labels must fit their side of the network, not run off it. */
+    .explore-topic {
+      font-size: 0.74rem;
+    }
+  }
+  @media (min-width: 620px) {
+    .explore-topic {
+      font-size: 0.98rem;
+    }
+    .explore-projects li {
+      font-size: 0.84rem;
+    }
+  }
+  @media (min-width: 900px) {
+    .explore-topic {
+      gap: 18px;
+      font-size: 1.18rem;
+    }
+    .explore-projects li {
+      gap: 18px;
+      font-size: 1.02rem;
+    }
+  }
+
+  .explore-reading {
+    min-width: 0;
+  }
+  .explore-reading .ab-reading-title {
+    margin-top: 0;
+    font-size: clamp(1.9rem, 2.5vw, 2.5rem);
+  }
+  .explore-reading .ab-reading-text {
+    margin-top: 16px;
+    font-size: clamp(1.02rem, 1.3vw, 1.16rem);
+    color: var(--text);
+  }
+  @media (min-width: 1100px) {
+    .explore-reading {
+      min-height: clamp(680px, 88vh, 820px);
+      padding-left: clamp(20px, 2vw, 32px);
+      border-left: 1px solid var(--line);
+    }
+  }
+  .explore-uses {
+    display: grid;
+    margin: 22px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .explore-uses li {
+    display: grid;
+    gap: 8px 18px;
+    padding-block: 13px;
+    border-top: 1px solid var(--line);
+    animation: explore-use 420ms var(--ease-out) both;
+    animation-delay: calc(var(--i) * 55ms + 120ms);
+  }
+  @keyframes explore-use {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+  }
+  .explore-uses .matrix-action {
+    justify-self: start;
+    margin-top: 0;
+    padding-inline: 14px;
+    border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+    border-radius: var(--radius);
+    font-size: 0.84rem;
+    white-space: nowrap;
+    transition:
+      background-color var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out);
+  }
+  .explore-uses .matrix-action:hover {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+  }
+  /* Beside the text where there is room; in the narrow desktop panel it sits underneath. */
+  @media (min-width: 480px) and (max-width: 1099px) {
+    .explore-uses li {
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+    }
+    .explore-uses .matrix-action {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+    }
+  }
+  .explore-use-name {
+    color: var(--text);
+    font-family: var(--font-display);
+    font-size: 1.16rem;
+    line-height: 1.2;
+  }
+  .explore-use-note {
+    color: var(--text-muted);
+    font-size: 0.92rem;
+    line-height: 1.5;
+  }
+  .explore-next {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    margin-top: 14px;
+    color: var(--accent-strong);
+    font-size: 0.92rem;
+  }
+
+  .explore-kind {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent-strong);
+  }
+  .explore-next {
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    font-size: 0.92rem;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    cursor: pointer;
+  }
+  .explore-arch.matrix-action {
+    padding-inline: 14px;
+    border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+    border-radius: var(--radius);
+    text-decoration: none;
+  }
+
+  /* ---- The Laboratory's two parts: the capability map, then the system workflows ---- */
+  .lab-part {
+    scroll-margin-top: calc(var(--header-h) + 24px);
+  }
+  .lab-part + .lab-part {
+    margin-top: clamp(72px, 9vw, 128px);
+    padding-top: clamp(28px, 4vw, 44px);
+    border-top: 1px solid var(--line);
+  }
+  .lab-part-kicker {
+    display: flex;
+    gap: 12px;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .lab-part-kicker span {
+    color: var(--accent-strong);
+  }
+  .lab-part-title {
+    margin-top: 12px;
+    margin-bottom: 14px;
+    font-size: clamp(1.7rem, 3.4vw, 2.6rem);
+    line-height: 1.08;
+    outline: none;
+  }
+  .lab-part-lede {
+    max-width: 62ch;
+    margin-bottom: clamp(28px, 4vw, 44px);
+    line-height: 1.6;
+    color: var(--text-muted);
+  }
+}

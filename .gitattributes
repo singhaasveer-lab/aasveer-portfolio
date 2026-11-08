@@ -1,0 +1,12 @@
+# Binary assets: never convert line endings or diff them as text.
+# The resume PDF in particular has no NUL bytes, so Git would otherwise treat it as text and
+# could rewrite its line endings on Windows checkouts, corrupting the approved file.
+*.pdf   binary
+*.png   binary
+*.webp  binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.woff  binary
+*.woff2 binary

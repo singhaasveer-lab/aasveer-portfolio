@@ -1,0 +1,151 @@
+{
+  "review_notes": [
+    "Facts come from the owner's brief and content/profile.json. Education and location are read from the profile and not repeated here.",
+    "portrait.src is the owner's photograph with only its white background removed. The untouched original is not in the repository. The person's pixels are not edited.",
+    "earlier_education is taken from the resume. It holds no grades.",
+    "principles are the owner's wording. headline is the owner's suggested heading in sentence case.",
+    "perspective is drafted from the owner's stated interests and skills. It is a general way of thinking, makes no claim about any one project, and every grounded_in entry is an interest here or a skill in content/skills.json."
+  ],
+  "eyebrow": "The engineer behind the systems",
+  "headline": [
+    "I build practical AI systems,",
+    "from intelligent pipelines",
+    "to experiences people",
+    "can actually use."
+  ],
+  "headline_accent": ["practical AI systems", "actually use"],
+  "intro": "I'm Aasveer, a Computer Science & Engineering (AI/ML) student who enjoys building practical applications that bring intelligent systems, backend engineering, data processing and usable interfaces together.",
+  "interests": [
+    "Generative AI",
+    "LLMs",
+    "RAG",
+    "NLP",
+    "Machine Learning",
+    "Recommendation Systems",
+    "AI-powered applications"
+  ],
+  "role_loop": ["RAG systems", "LLM pipelines", "NLP", "Recommendation engines"],
+  "portrait": {
+    "src": "/images/aasveer-portrait-cutout.webp",
+    "alt": "Portrait of Aasveer Singh"
+  },
+  "perspective": {
+    "note": "A way of looking at a problem, not the architecture of any one project.",
+    "stages": [
+      {
+        "id": "problem",
+        "label": "Problem",
+        "annotation": "What is needed",
+        "explanation": "Start with what a person is actually trying to do, and what a useful result would look like, before choosing any tools.",
+        "grounded_in": ["AI-powered applications"]
+      },
+      {
+        "id": "intelligence",
+        "label": "Intelligence",
+        "annotation": "What can reason about it",
+        "explanation": "Choose the technique that fits the problem, whether that is retrieval, language understanding, ranking or a language model.",
+        "grounded_in": [
+          "Generative AI",
+          "LLMs",
+          "RAG",
+          "NLP",
+          "Machine Learning",
+          "Recommendation Systems"
+        ]
+      },
+      {
+        "id": "engineering",
+        "label": "Engineering",
+        "annotation": "What makes it dependable",
+        "explanation": "Build what surrounds the model: the data processing, backend services and APIs that let it run as a real application.",
+        "grounded_in": ["Python", "SQL", "FastAPI", "REST APIs"]
+      },
+      {
+        "id": "experience",
+        "label": "Experience",
+        "annotation": "What a person touches",
+        "explanation": "Bring it to an interface someone can use, because that is where all of the other work becomes useful.",
+        "grounded_in": ["React", "TypeScript", "Tailwind CSS"]
+      }
+    ]
+  },
+  "principles": [
+    {
+      "id": "practical",
+      "label": "Practical AI",
+      "text": "I enjoy building practical applications that use AI to address real problems rather than treating models as isolated demonstrations."
+    },
+    {
+      "id": "systems",
+      "label": "Systems Thinking",
+      "text": "I am interested in bringing together intelligent systems, data processing, backend engineering, APIs and user-facing interfaces."
+    },
+    {
+      "id": "human",
+      "label": "Human-Centred Engineering",
+      "text": "The usefulness of an intelligent system depends on how well its different components work together for the person using it."
+    }
+  ],
+  "process": {
+    "note": "A way of thinking more than a fixed recipe. Every project moves through these differently.",
+    "stages": [
+      {
+        "id": "understand",
+        "label": "Understand the problem",
+        "explanation": "Work out what the person actually needs and what a good result looks like, before choosing any tools.",
+        "example": {
+          "project": "giftbro-ai",
+          "text": "The real risk was a model inventing gifts that don't exist, so ranking real catalogue items became the core of the design."
+        }
+      },
+      {
+        "id": "design",
+        "label": "Design the system",
+        "explanation": "Decide what the parts are, what each one is responsible for, and how data moves between them.",
+        "example": {
+          "project": "pennybloom",
+          "text": "One Python core holds every rule, so the command-line app and the web app cannot disagree."
+        }
+      },
+      {
+        "id": "pipeline",
+        "label": "Build the pipeline",
+        "explanation": "Build the main path one stage at a time, so each step can be checked on its own.",
+        "example": {
+          "project": "wingman-ai",
+          "text": "A screenshot passes through OCR, signal analysis, profiling and retrieval as separate stages."
+        }
+      },
+      {
+        "id": "connect",
+        "label": "Connect the components",
+        "explanation": "Join the backend, data and interface through clear boundaries, so one part can change without breaking the rest.",
+        "example": {
+          "project": "interviewiq",
+          "text": "An Express and Vite server proxies API calls to FastAPI, so the browser talks to a single origin."
+        }
+      },
+      {
+        "id": "refine",
+        "label": "Test and refine",
+        "explanation": "Try real inputs, see what breaks, and plan for what happens when a dependency isn't there.",
+        "example": {
+          "project": "studyforge-ai",
+          "text": "Without a Gemini key, the app shows the retrieved source text and labels it clearly, instead of failing."
+        }
+      }
+    ]
+  },
+  "earlier_education": [
+    {
+      "level": "Class XII",
+      "institution": "Shri Guru Harkishan Sen. Sec. School",
+      "year": "2023"
+    },
+    {
+      "level": "Class X",
+      "institution": "Shri Guru Harkishan Public School",
+      "year": "2021"
+    }
+  ]
+}

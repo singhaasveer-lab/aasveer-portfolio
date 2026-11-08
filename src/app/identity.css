@@ -1,0 +1,119 @@
+/* ==========================================================================
+   The identity emblem, the About section (Behind the System) and the shared
+   instrument details: hero layout, section ticks, case-file annotations and
+   the vector field. Colour and timing come from the tokens in globals.css.
+   ========================================================================== */
+@layer components {
+  /* ---- Identity emblem ---- */
+  /* ---- Section instrument details ---- */
+  .section-ticks {
+    display: block;
+    height: 6px;
+    margin-top: 1px;
+    background-image: linear-gradient(to right, var(--line-strong) 1px, transparent 1px);
+    background-size: 24px 100%;
+    mask-image: linear-gradient(90deg, #000, transparent 46%);
+  }
+
+  /* ---- Vector field: a third depth plane behind the grid and mesh ---- */
+  .scene-field {
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: calc(100% + 360px);
+  }
+  .scene-field svg {
+    width: 100%;
+    height: 100%;
+  }
+  .scene-field path {
+    fill: none;
+    stroke: rgb(63 213 245 / 0.1);
+    stroke-linecap: round;
+  }
+
+  /* ---- Case files ---- */
+  .case {
+    overflow: clip;
+  }
+  .case::after {
+    content: "";
+    position: absolute;
+    right: -1px;
+    bottom: -1px;
+    z-index: 2;
+    width: 20px;
+    height: 20px;
+    pointer-events: none;
+    border: solid var(--hue);
+    border-width: 0 1px 1px 0;
+    transition:
+      width var(--dur-base) var(--ease-out),
+      height var(--dur-base) var(--ease-out);
+  }
+  .case:hover::after,
+  .case:focus-within::after {
+    width: 44px;
+    height: 44px;
+  }
+  .case-file {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 2px 14px;
+    padding-bottom: 10px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid color-mix(in srgb, var(--hue) 28%, var(--line));
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  /* ---- About ---- */
+  .about {
+    position: relative;
+    border-top: 1px solid var(--line);
+  }
+  .about .section {
+    background:
+      radial-gradient(44% 30% at 88% 8%, rgb(155 135 255 / 0.1), transparent 70%),
+      radial-gradient(40% 24% at 4% 46%, rgb(45 212 191 / 0.07), transparent 70%);
+  }
+  .about-spine {
+    position: absolute;
+    top: clamp(88px, 12vw, 160px);
+    bottom: clamp(88px, 12vw, 160px);
+    left: max(14px, calc(50% - var(--maxw) / 2 - 28px));
+    display: none;
+    width: 1px;
+    background: var(--line);
+  }
+  @media (min-width: 1100px) {
+    .about-spine {
+      display: block;
+    }
+  }
+  .about-spine-fill {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, var(--accent), var(--blue) 55%, var(--violet));
+    box-shadow: 0 0 10px var(--accent-glow);
+    transform-origin: top;
+  }
+  .matrix-link-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--accent-strong);
+    font: inherit;
+    font-size: 0.8rem;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+  }
+}

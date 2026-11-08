@@ -1,0 +1,249 @@
+{
+  "review_notes": [
+    "The capability map in the AI Systems Laboratory. Moved from About's former Areas of Exploration, unchanged: every capability-to-project link was checked against that project's source.",
+    "Each `example` and each topic's `projects` entry states something confirmed in that project's source.",
+    "The six topics after the original six were each checked against their projects' source: Machine Learning, OCR and Document Intelligence, AI Models and Platforms, Data and Database Systems, Frontend Engineering, Analytics and Forecasting."
+  ],
+  "capabilities": [
+    {
+      "id": "retrieval",
+      "label": "RAG and Retrieval Systems",
+      "description": "Finding the right source text first, so a result rests on real material.",
+      "lab": "rag",
+      "projects": [
+        {
+          "slug": "wingman-ai",
+          "note": "TF-IDF retrieval over a local knowledge base."
+        },
+        {
+          "slug": "studyforge-ai",
+          "note": "Retrieval over chunks of uploaded PDFs."
+        },
+        {
+          "slug": "interviewiq",
+          "note": "A knowledge base ranked by keyword matches."
+        }
+      ]
+    },
+    {
+      "id": "generative",
+      "label": "Generative AI and LLM Applications",
+      "description": "Using language models where they help, inside a system that keeps them on track.",
+      "projects": [
+        {
+          "slug": "interviewiq",
+          "note": "Gemini generates questions and evaluates answers."
+        },
+        {
+          "slug": "giftbro-ai",
+          "note": "Gemini personalizes a shortlist it cannot change."
+        },
+        {
+          "slug": "studyforge-ai",
+          "note": "Gemini writes answers, flashcards and quizzes."
+        }
+      ],
+      "lab": "llm-evaluation"
+    },
+    {
+      "id": "nlp",
+      "label": "NLP",
+      "description": "Turning human language into signals and scores that software can act on.",
+      "lab": "nlp",
+      "projects": [
+        {
+          "slug": "wingman-ai",
+          "note": "Signal analysis of conversations."
+        },
+        {
+          "slug": "studyforge-ai",
+          "note": "Text processing for retrieval over study material."
+        }
+      ]
+    },
+    {
+      "id": "recommendation",
+      "label": "Recommendation Engines",
+      "description": "Ranking real items against a profile, in a way that can be explained.",
+      "lab": "recommendation",
+      "projects": [
+        {
+          "slug": "giftbro-ai",
+          "note": "Hybrid TF-IDF and weighted ranking of catalogue gifts."
+        }
+      ]
+    },
+    {
+      "id": "backend",
+      "label": "Backend and API Engineering",
+      "description": "The services, data and contracts that make everything else dependable.",
+      "projects": [
+        {
+          "slug": "interviewiq",
+          "note": "FastAPI routers with JWT authentication."
+        },
+        {
+          "slug": "wingman-ai",
+          "note": "A REST API over the analysis core."
+        },
+        {
+          "slug": "giftbro-ai",
+          "note": "A REST API over the recommender."
+        },
+        {
+          "slug": "studyforge-ai",
+          "note": "FastAPI for accounts, documents and chat."
+        },
+        {
+          "slug": "pennybloom",
+          "note": "A thin FastAPI layer with no business logic."
+        }
+      ]
+    },
+    {
+      "id": "data",
+      "label": "Intelligent Data Applications",
+      "description": "Turning everyday records into something a person can understand and use.",
+      "projects": [
+        {
+          "slug": "smartqueue-ai",
+          "note": "Rule-based congestion insights from queue state."
+        },
+        {
+          "slug": "pennybloom",
+          "note": "Reports, budgets and trends from personal records."
+        }
+      ],
+      "lab": "data-analytics"
+    },
+    {
+      "id": "machine-learning",
+      "label": "Machine Learning",
+      "description": "Learning from data. Here it vectorizes text and scores candidates; none of these projects trains a predictive model.",
+      "projects": [
+        {
+          "slug": "wingman-ai",
+          "note": "Scikit-learn TF-IDF vectors for the knowledge-base search."
+        },
+        {
+          "slug": "studyforge-ai",
+          "note": "Scikit-learn TF-IDF vectors for retrieval over PDF chunks."
+        },
+        {
+          "slug": "giftbro-ai",
+          "note": "Scikit-learn similarity plus engineered match scores for each gift."
+        }
+      ]
+    },
+    {
+      "id": "ocr",
+      "label": "OCR and Document Intelligence",
+      "lab": "ocr",
+      "description": "Reading the text inside images and documents, so it can be analysed.",
+      "projects": [
+        {
+          "slug": "wingman-ai",
+          "note": "Reads chat screenshots with Tesseract OCR."
+        },
+        {
+          "slug": "studyforge-ai",
+          "note": "Extracts PDF text page by page with PyMuPDF, then chunks it."
+        }
+      ]
+    },
+    {
+      "id": "models",
+      "label": "AI Models and Platforms",
+      "lab": "llm-evaluation",
+      "description": "The model APIs behind the generative features, and calling them reliably. All three use Google's Gemini API.",
+      "projects": [
+        {
+          "slug": "interviewiq",
+          "note": "Gemini through the GenAI SDK, with three attempts per request."
+        },
+        {
+          "slug": "studyforge-ai",
+          "note": "Gemini with a fallback model, and Groq for streamed chat."
+        },
+        {
+          "slug": "giftbro-ai",
+          "note": "Gemini with a response schema it must follow."
+        }
+      ]
+    },
+    {
+      "id": "data-systems",
+      "label": "Data and Database Systems",
+      "description": "Where the data lives, and how it is queried.",
+      "projects": [
+        {
+          "slug": "studyforge-ai",
+          "note": "SQLite with hand-written SQL for documents, chunks and study material."
+        },
+        {
+          "slug": "wingman-ai",
+          "note": "SQLite for saved analyses and history."
+        },
+        {
+          "slug": "giftbro-ai",
+          "note": "SQLite for recommendation history."
+        },
+        {
+          "slug": "interviewiq",
+          "note": "SQLAlchemy over SQLite locally; its Docker setup runs PostgreSQL."
+        }
+      ]
+    },
+    {
+      "id": "frontend",
+      "label": "Frontend Engineering",
+      "description": "The interfaces people actually use, from React apps to Python dashboards.",
+      "projects": [
+        {
+          "slug": "studyforge-ai",
+          "note": "A Next.js and React study workspace."
+        },
+        {
+          "slug": "pennybloom",
+          "note": "A React, TypeScript and Tailwind CSS finance app."
+        },
+        {
+          "slug": "interviewiq",
+          "note": "A React, TypeScript and Tailwind CSS interview platform."
+        },
+        {
+          "slug": "smartqueue-ai",
+          "note": "React, TypeScript and Tailwind CSS queue screens."
+        },
+        {
+          "slug": "wingman-ai",
+          "note": "A Streamlit interface for the analysis."
+        },
+        {
+          "slug": "giftbro-ai",
+          "note": "A Streamlit interface for recommendations."
+        }
+      ]
+    },
+    {
+      "id": "analytics",
+      "label": "Analytics and Forecasting",
+      "lab": "data-analytics",
+      "description": "Turning records into figures, trends and stated estimates.",
+      "projects": [
+        {
+          "slug": "pennybloom",
+          "note": "Reports, a least-squares spending trend and a next-month estimate from a three-month average."
+        },
+        {
+          "slug": "smartqueue-ai",
+          "note": "Wait and service times, priority share and no-shows from queue tokens."
+        },
+        {
+          "slug": "interviewiq",
+          "note": "Score history and topic averages across interviews."
+        }
+      ]
+    }
+  ]
+}

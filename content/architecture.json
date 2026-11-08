@@ -1,0 +1,1205 @@
+{
+  "review_notes": [
+    "Each diagram was drawn from that project's source code, with `source` naming the file behind each component. Nothing is included from assumption.",
+    "`system` is the simplified view and `engineering` the detailed one. Both reuse the same components, so a component is described once.",
+    "`at` is [column, row] on the diagram grid. Each edge is [from, to, label].",
+    "Wingman AI and GiftBro AI import their Python core directly from Streamlit; FastAPI is a second, parallel entry point. In GiftBro AI, Gemini is only on the Streamlit path.",
+    "SmartQueue AI has no backend: it runs entirely in the browser, and its queue intelligence is rule-based."
+  ],
+  "architectures": [
+    {
+      "slug": "interviewiq",
+      "summary": "A React application served by an Express and Vite server, which forwards API calls to a FastAPI backend. FastAPI handles accounts, stores data through SQLAlchemy and calls Gemini for AI features.",
+      "nodes": [
+        {
+          "id": "spa",
+          "label": "React application",
+          "kind": "interface",
+          "responsibility": "The browser interface: interview setup and room, aptitude tests, analyzers, coach, analytics and settings.",
+          "inputs": ["User actions", "JSON from the API"],
+          "outputs": ["Requests to /api"],
+          "technologies": ["React 19", "TypeScript", "Tailwind CSS"],
+          "source": "src/App.tsx"
+        },
+        {
+          "id": "voice",
+          "label": "Voice interview room",
+          "kind": "interface",
+          "responsibility": "Speech-to-text and spoken playback, handled by the browser's own speech APIs.",
+          "inputs": ["Microphone audio"],
+          "outputs": ["Transcribed answers"],
+          "technologies": ["Web Speech API"],
+          "source": "src/views/VoiceInterviewView.tsx"
+        },
+        {
+          "id": "express",
+          "label": "Express and Vite server",
+          "kind": "server",
+          "responsibility": "Serves the app and proxies /api to FastAPI, so the browser talks to a single origin.",
+          "inputs": ["Browser requests"],
+          "outputs": ["The web app", "Proxied API calls"],
+          "technologies": ["Express", "Vite"],
+          "source": "server.ts"
+        },
+        {
+          "id": "fastapi",
+          "label": "FastAPI backend",
+          "kind": "server",
+          "responsibility": "The application API, with routers for auth, interviews, coach chat, resume, job, RAG, aptitude, profile, analytics, learning and coding.",
+          "inputs": ["Proxied API calls"],
+          "outputs": ["JSON responses"],
+          "technologies": ["FastAPI", "Pydantic", "Python"],
+          "source": "backend/app/main.py"
+        },
+        {
+          "id": "auth",
+          "label": "Authentication",
+          "kind": "service",
+          "responsibility": "Hashes passwords with bcrypt, issues JWTs and resolves the current user for protected routes.",
+          "inputs": ["Credentials", "Bearer tokens"],
+          "outputs": ["JWT", "Current user"],
+          "technologies": ["JWT Authentication", "bcrypt"],
+          "source": "backend/app/auth/security.py"
+        },
+        {
+          "id": "limit",
+          "label": "AI rate limiter",
+          "kind": "service",
+          "responsibility": "Applies a per-user, in-memory sliding-window quota before AI routes run.",
+          "inputs": ["The current user"],
+          "outputs": ["Allowed call, or HTTP 429"],
+          "technologies": ["Python"],
+          "source": "backend/app/auth/rate_limit.py"
+        },
+        {
+          "id": "analyzers",
+          "label": "Analyzers and coach",
+          "kind": "pipeline",
+          "responsibility": "Resume ATS scanning, job description analysis, the AI coach, learning paths and code evaluation. Each builds a prompt and asks for structured output.",
+          "inputs": ["Resume, job or code text"],
+          "outputs": ["Structured analysis"],
+          "technologies": ["FastAPI", "Gemini API"],
+          "source": "backend/app/routes/resume.py"
+        },
+        {
+          "id": "interview",
+          "label": "Interview engine",
+          "kind": "pipeline",
+          "responsibility": "Creates interviews and evaluates submitted answers through the AI service, storing questions, answers and evaluations.",
+          "inputs": ["Role, type, difficulty", "Candidate answers"],
+          "outputs": ["Questions", "Scores and feedback"],
+          "technologies": ["FastAPI", "SQLAlchemy"],
+          "source": "backend/app/routes/interview.py"
+        },
+        {
+          "id": "aiservice",
+          "label": "AI service",
+          "kind": "service",
+          "responsibility": "Builds the prompts for interview and aptitude questions and for evaluation, and parses the JSON that comes back.",
+          "inputs": ["Interview parameters", "Questions and answers"],
+          "outputs": ["Parsed question and evaluation data"],
+          "technologies": ["Python", "Google GenAI SDK"],
+          "source": "backend/app/services/ai_service.py"
+        },
+        {
+          "id": "gemini",
+          "label": "Gemini API",
+          "kind": "ai",
+          "responsibility": "The external model that generates questions and evaluates answers, resumes and code.",
+          "inputs": ["Prompts"],
+          "outputs": ["Generated text and JSON"],
+          "technologies": ["Gemini API"],
+          "source": "backend/app/ai/gemini_client.py"
+        },
+        {
+          "id": "aptitude",
+          "label": "Aptitude bank",
+          "kind": "pipeline",
+          "responsibility": "Instant aptitude questions generated from templates, with answers computed in code and no AI call. An AI-generated mode is also available through the AI service.",
+          "inputs": ["Sections, difficulty, count"],
+          "outputs": ["Aptitude questions"],
+          "technologies": ["Python"],
+          "source": "backend/app/services/aptitude_bank.py"
+        },
+        {
+          "id": "rag",
+          "label": "Knowledge base",
+          "kind": "pipeline",
+          "responsibility": "Stores uploaded notes as paragraph chunks and searches them by counting keyword matches.",
+          "inputs": ["Notes text", "Search query"],
+          "outputs": ["Ranked chunks"],
+          "technologies": ["FastAPI", "SQLAlchemy"],
+          "source": "backend/app/routes/rag.py"
+        },
+        {
+          "id": "analytics",
+          "label": "Analytics",
+          "kind": "output",
+          "responsibility": "Calculates score progression, category breakdowns, streaks and strongest and weakest topics from stored results.",
+          "inputs": ["Stored evaluations and attempts"],
+          "outputs": ["Dashboard data"],
+          "technologies": ["FastAPI"],
+          "source": "backend/app/routes/analytics.py"
+        },
+        {
+          "id": "sqlite",
+          "label": "SQLite database",
+          "kind": "data",
+          "responsibility": "Persists users, profiles, interviews, questions, answers, evaluations, aptitude attempts, documents and chunks.",
+          "inputs": ["ORM writes"],
+          "outputs": ["ORM reads"],
+          "technologies": ["SQLite", "SQLAlchemy"],
+          "source": "backend/app/database.py"
+        }
+      ],
+      "system": {
+        "cols": 4,
+        "rows": 3,
+        "at": {
+          "spa": [0, 1],
+          "express": [1, 1],
+          "fastapi": [2, 1],
+          "auth": [2, 0],
+          "gemini": [3, 0],
+          "interview": [3, 1],
+          "sqlite": [3, 2]
+        },
+        "edges": [
+          ["spa", "express", "HTTP requests"],
+          ["express", "fastapi", "proxied /api"],
+          ["fastapi", "auth", "checks identity"],
+          ["fastapi", "interview", "runs interviews"],
+          ["interview", "gemini", "prompts and results"],
+          ["interview", "sqlite", "stores scores"]
+        ]
+      },
+      "engineering": {
+        "cols": 5,
+        "rows": 4,
+        "at": {
+          "voice": [0, 0],
+          "auth": [2, 0],
+          "analyzers": [3, 0],
+          "spa": [0, 1],
+          "express": [1, 1],
+          "fastapi": [2, 1],
+          "limit": [3, 1],
+          "gemini": [4, 1],
+          "aptitude": [1, 2],
+          "rag": [2, 2],
+          "interview": [3, 2],
+          "aiservice": [4, 2],
+          "sqlite": [2, 3],
+          "analytics": [3, 3]
+        },
+        "edges": [
+          ["voice", "spa", "transcribed answers"],
+          ["spa", "express", "HTTP requests"],
+          ["express", "fastapi", "proxied /api"],
+          ["fastapi", "auth", "resolves the user"],
+          ["fastapi", "limit", "AI routes"],
+          ["limit", "analyzers", "allowed calls"],
+          ["limit", "interview", "allowed calls"],
+          ["analyzers", "gemini", "prompts"],
+          ["interview", "aiservice", "questions and evaluation"],
+          ["aiservice", "gemini", "prompts"],
+          ["fastapi", "aptitude", "instant questions"],
+          ["fastapi", "rag", "upload and search"],
+          ["rag", "sqlite", "chunks"],
+          ["aptitude", "sqlite", "attempts"],
+          ["interview", "sqlite", "results"],
+          ["sqlite", "analytics", "stored results"]
+        ],
+        "flows": [
+          {
+            "label": "Mock interview",
+            "path": ["spa", "express", "fastapi", "limit", "interview", "aiservice", "gemini"]
+          },
+          {
+            "label": "Knowledge base search",
+            "path": ["fastapi", "rag", "sqlite"]
+          }
+        ]
+      }
+    },
+    {
+      "slug": "wingman-ai",
+      "summary": "A Python application with one analysis core and two entry points. Streamlit pages import the core directly, and a FastAPI service exposes the same core as a REST API.",
+      "nodes": [
+        {
+          "id": "streamlit",
+          "label": "Streamlit interface",
+          "kind": "interface",
+          "responsibility": "The multi-page application: Screenshot Intelligence, Decision Mode, Reply Lab, Date Ideas, Dating Tips, History and Saved.",
+          "inputs": ["Screenshots", "Conversation text"],
+          "outputs": ["Rendered analysis"],
+          "technologies": ["Streamlit", "Python"],
+          "source": "app.py"
+        },
+        {
+          "id": "fastapi",
+          "label": "FastAPI REST API",
+          "kind": "server",
+          "responsibility": "A parallel entry point: POST /analyze for text, POST /analyze-screenshot for images, and health checks.",
+          "inputs": ["Text or image requests"],
+          "outputs": ["Analysis as JSON"],
+          "technologies": ["FastAPI", "Pydantic", "REST APIs"],
+          "source": "api.py"
+        },
+        {
+          "id": "ocr",
+          "label": "Screenshot OCR",
+          "kind": "pipeline",
+          "responsibility": "Converts a screenshot to RGB and extracts its text with Tesseract, returning a readable message if that fails.",
+          "inputs": ["Image"],
+          "outputs": ["Extracted text"],
+          "technologies": ["OCR", "pytesseract", "Pillow"],
+          "source": "core/ocr.py"
+        },
+        {
+          "id": "signals",
+          "label": "NLP signal analysis",
+          "kind": "pipeline",
+          "responsibility": "Scores sentiment, questions, flirt language, reciprocity and message energy using word sets and counting rules.",
+          "inputs": ["Conversation text"],
+          "outputs": ["Signal scores"],
+          "technologies": ["NLP", "Python"],
+          "source": "core/coach.py"
+        },
+        {
+          "id": "profile",
+          "label": "Conversation profiling",
+          "kind": "pipeline",
+          "responsibility": "Combines the signals with fixed weights into a vibe, a confidence value and the Conversation DNA profile.",
+          "inputs": ["Signal scores"],
+          "outputs": ["Vibe and confidence"],
+          "technologies": ["Python"],
+          "source": "core/coach.py"
+        },
+        {
+          "id": "strategy",
+          "label": "Decision brief and replies",
+          "kind": "pipeline",
+          "responsibility": "Picks the next move, its reasoning and written reply strategies from rules and templates. No language model is involved.",
+          "inputs": ["Vibe and signals"],
+          "outputs": ["Next move and replies"],
+          "technologies": ["Python"],
+          "source": "core/coach.py"
+        },
+        {
+          "id": "rag",
+          "label": "Local RAG retrieval",
+          "kind": "pipeline",
+          "responsibility": "Vectorizes the entries and the query with TF-IDF, ranks them by cosine similarity and returns the top matches.",
+          "inputs": ["Query text", "Knowledge-base entries"],
+          "outputs": ["Entries with retrieval scores"],
+          "technologies": ["RAG", "TF-IDF", "Cosine Similarity", "Scikit-learn"],
+          "source": "core/rag.py"
+        },
+        {
+          "id": "kb",
+          "label": "Knowledge base",
+          "kind": "data",
+          "responsibility": "Local JSON file of guidance entries with title, category, tags and content.",
+          "inputs": ["Authored entries"],
+          "outputs": ["Entries for retrieval"],
+          "technologies": ["JSON"],
+          "source": "knowledge_base.json"
+        },
+        {
+          "id": "result",
+          "label": "Analysis result",
+          "kind": "output",
+          "responsibility": "The combined output: vibe, confidence, signals, next move, reply options and retrieved guidance.",
+          "inputs": ["Strategy", "Retrieved entries"],
+          "outputs": ["Decision brief"],
+          "technologies": ["Python"],
+          "source": "core/coach.py"
+        },
+        {
+          "id": "replylab",
+          "label": "Reply Lab",
+          "kind": "interface",
+          "responsibility": "A page for shaping a reply by intent and tone, with the option to save it.",
+          "inputs": ["Intent and tone"],
+          "outputs": ["Reply options", "Saved items"],
+          "technologies": ["Streamlit"],
+          "source": "pages/reply_lab.py"
+        },
+        {
+          "id": "tips",
+          "label": "Dating Tips",
+          "kind": "interface",
+          "responsibility": "Browses and searches guidance by calling the retrieval function directly.",
+          "inputs": ["Selected topic or search"],
+          "outputs": ["Matching guidance"],
+          "technologies": ["Streamlit", "RAG"],
+          "source": "pages/dating_tips.py"
+        },
+        {
+          "id": "dates",
+          "label": "Date engine",
+          "kind": "service",
+          "responsibility": "Builds date plans from a library of ideas, filtered by vibe and energy.",
+          "inputs": ["Vibe and energy"],
+          "outputs": ["Date plans"],
+          "technologies": ["Python"],
+          "source": "core/date_engine.py"
+        },
+        {
+          "id": "sqlite",
+          "label": "SQLite database",
+          "kind": "data",
+          "responsibility": "Stores saved items and conversation analysis history.",
+          "inputs": ["Saved items", "History entries"],
+          "outputs": ["History and saved lists"],
+          "technologies": ["SQLite"],
+          "source": "core/db.py"
+        }
+      ],
+      "system": {
+        "cols": 4,
+        "rows": 3,
+        "at": {
+          "streamlit": [0, 0],
+          "fastapi": [0, 2],
+          "ocr": [1, 1],
+          "signals": [2, 0],
+          "rag": [2, 2],
+          "result": [3, 1],
+          "sqlite": [1, 0]
+        },
+        "edges": [
+          ["streamlit", "ocr", "screenshots"],
+          ["fastapi", "ocr", "screenshots"],
+          ["streamlit", "sqlite", "history and saved items"],
+          ["ocr", "signals", "extracted text"],
+          ["ocr", "rag", "conversation text"],
+          ["signals", "result", "signals and strategy"],
+          ["rag", "result", "retrieved guidance"]
+        ]
+      },
+      "engineering": {
+        "cols": 5,
+        "rows": 4,
+        "at": {
+          "replylab": [1, 0],
+          "sqlite": [2, 0],
+          "strategy": [3, 0],
+          "streamlit": [0, 1],
+          "ocr": [1, 1],
+          "signals": [2, 1],
+          "profile": [3, 1],
+          "result": [4, 1],
+          "fastapi": [0, 2],
+          "tips": [1, 2],
+          "rag": [3, 2],
+          "dates": [1, 3],
+          "kb": [3, 3]
+        },
+        "edges": [
+          ["streamlit", "replylab", "page"],
+          ["streamlit", "ocr", "uploaded screenshot"],
+          ["fastapi", "ocr", "POST /analyze-screenshot"],
+          ["streamlit", "tips", "page"],
+          ["streamlit", "dates", "vibe and energy"],
+          ["ocr", "signals", "extracted text"],
+          ["signals", "profile", "signal scores"],
+          ["profile", "strategy", "vibe"],
+          ["strategy", "result", "next move and replies"],
+          ["signals", "rag", "conversation text"],
+          ["tips", "rag", "topic query"],
+          ["kb", "rag", "entries"],
+          ["rag", "result", "top 3 entries"],
+          ["replylab", "sqlite", "saved replies"]
+        ],
+        "flows": [
+          {
+            "label": "Screenshot analysis",
+            "path": ["streamlit", "ocr", "signals", "profile", "strategy", "result"]
+          },
+          {
+            "label": "Retrieval",
+            "path": ["signals", "rag", "result"]
+          }
+        ]
+      }
+    },
+    {
+      "slug": "giftbro-ai",
+      "summary": "A Python recommender with two entry points. Both run the same ML ranking over a real catalogue, and only the Streamlit app adds the optional Gemini layer.",
+      "nodes": [
+        {
+          "id": "streamlit",
+          "label": "Streamlit frontend",
+          "kind": "interface",
+          "responsibility": "Collects the recipient profile, shows ranked gifts and can request Gemini personalization.",
+          "inputs": ["Recipient profile"],
+          "outputs": ["Ranked gifts and advice"],
+          "technologies": ["Streamlit", "Python"],
+          "source": "app.py"
+        },
+        {
+          "id": "fastapi",
+          "label": "FastAPI backend",
+          "kind": "server",
+          "responsibility": "POST /recommend runs the ranking and deterministic advice, then saves the result. Validates input with Pydantic.",
+          "inputs": ["Gift request JSON"],
+          "outputs": ["Recommendations as JSON"],
+          "technologies": ["FastAPI", "Pydantic"],
+          "source": "api.py"
+        },
+        {
+          "id": "catalogue",
+          "label": "Gift catalogue",
+          "kind": "data",
+          "responsibility": "The CSV of real gifts: name, category, occasion, relationship, interests, personality, price and description.",
+          "inputs": ["gifts.csv"],
+          "outputs": ["A cleaned DataFrame"],
+          "technologies": ["Pandas"],
+          "source": "recommender.py"
+        },
+        {
+          "id": "filter",
+          "label": "Candidate filtering",
+          "kind": "pipeline",
+          "responsibility": "Removes excluded names and avoid-list matches, and limits the pool to what fits the budget.",
+          "inputs": ["Catalogue", "Profile"],
+          "outputs": ["Candidate pool"],
+          "technologies": ["Pandas"],
+          "source": "recommender.py"
+        },
+        {
+          "id": "tfidf",
+          "label": "TF-IDF similarity",
+          "kind": "pipeline",
+          "responsibility": "Vectorizes item text and the profile, and scores each item with cosine similarity.",
+          "inputs": ["Feature text", "Profile string"],
+          "outputs": ["Cosine scores"],
+          "technologies": ["TF-IDF", "Cosine Similarity", "Scikit-learn"],
+          "source": "recommender.py"
+        },
+        {
+          "id": "signals",
+          "label": "Context signals",
+          "kind": "pipeline",
+          "responsibility": "Scores occasion, relationship, interests, personality, style, personalization and budget fit for each item.",
+          "inputs": ["Candidates", "Profile"],
+          "outputs": ["Signal scores"],
+          "technologies": ["Pandas", "Python"],
+          "source": "recommender.py"
+        },
+        {
+          "id": "ranker",
+          "label": "Weighted ranking",
+          "kind": "pipeline",
+          "responsibility": "Combines the signals with fixed weights, adds a strategy bonus and applies category diversity.",
+          "inputs": ["Cosine and signal scores"],
+          "outputs": ["Ranked shortlist"],
+          "technologies": ["Pandas"],
+          "source": "recommender.py"
+        },
+        {
+          "id": "coach",
+          "label": "Deterministic advice",
+          "kind": "service",
+          "responsibility": "Builds reasons, budget notes and tips from the scores without calling a model.",
+          "inputs": ["Ranked shortlist"],
+          "outputs": ["Written advice"],
+          "technologies": ["Python"],
+          "source": "ai_coach.py"
+        },
+        {
+          "id": "gemini",
+          "label": "Gemini personalization",
+          "kind": "ai",
+          "responsibility": "Optional layer that writes advice around the shortlist. Told to use only the supplied candidates.",
+          "inputs": ["Profile", "Ranked candidates"],
+          "outputs": ["Personalized advice as JSON"],
+          "technologies": ["Gemini API", "Google GenAI SDK"],
+          "source": "gemini_service.py"
+        },
+        {
+          "id": "results",
+          "label": "Recommendation output",
+          "kind": "output",
+          "responsibility": "Real catalogue items with match scores, reasons and advice.",
+          "inputs": ["Shortlist", "Advice"],
+          "outputs": ["Recommendations"],
+          "technologies": ["Python"],
+          "source": "app.py"
+        },
+        {
+          "id": "sqlite",
+          "label": "SQLite history",
+          "kind": "data",
+          "responsibility": "Stores recommendation history and favorite gifts.",
+          "inputs": ["Selected gifts", "Favorites"],
+          "outputs": ["History and favorites"],
+          "technologies": ["SQLite"],
+          "source": "database.py"
+        }
+      ],
+      "system": {
+        "cols": 4,
+        "rows": 3,
+        "at": {
+          "streamlit": [0, 0],
+          "fastapi": [0, 2],
+          "catalogue": [1, 0],
+          "ranker": [1, 1],
+          "gemini": [2, 0],
+          "results": [3, 1],
+          "sqlite": [3, 2]
+        },
+        "edges": [
+          ["streamlit", "ranker", "recipient profile"],
+          ["fastapi", "ranker", "recipient profile"],
+          ["catalogue", "ranker", "real items"],
+          ["ranker", "gemini", "shortlist, Streamlit only"],
+          ["ranker", "results", "ranked gifts"],
+          ["gemini", "results", "personalized advice"],
+          ["results", "sqlite", "history"]
+        ]
+      },
+      "engineering": {
+        "cols": 5,
+        "rows": 3,
+        "at": {
+          "catalogue": [1, 0],
+          "gemini": [3, 0],
+          "streamlit": [0, 1],
+          "filter": [1, 1],
+          "tfidf": [2, 1],
+          "ranker": [3, 1],
+          "results": [4, 1],
+          "fastapi": [0, 2],
+          "signals": [2, 2],
+          "coach": [3, 2],
+          "sqlite": [4, 2]
+        },
+        "edges": [
+          ["streamlit", "filter", "recipient profile"],
+          ["fastapi", "filter", "recipient profile"],
+          ["catalogue", "filter", "real items"],
+          ["filter", "tfidf", "feature text"],
+          ["filter", "signals", "candidates"],
+          ["tfidf", "ranker", "cosine scores"],
+          ["signals", "ranker", "signal scores"],
+          ["ranker", "coach", "shortlist"],
+          ["ranker", "gemini", "shortlist, Streamlit only"],
+          ["ranker", "results", "ranked gifts"],
+          ["coach", "results", "written advice"],
+          ["gemini", "results", "optional advice"],
+          ["results", "sqlite", "history and favorites"]
+        ],
+        "flows": [
+          {
+            "label": "Product ranking",
+            "path": ["catalogue", "filter", "tfidf", "ranker", "results"]
+          },
+          {
+            "label": "Gemini layer",
+            "path": ["ranker", "gemini", "results"]
+          }
+        ]
+      }
+    },
+    {
+      "slug": "studyforge-ai",
+      "summary": "A Next.js frontend calling a FastAPI backend. The backend turns uploaded PDFs into searchable chunks in SQLite, retrieves from them, and uses Gemini for answers and study material, with local fallbacks.",
+      "nodes": [
+        {
+          "id": "frontend",
+          "label": "Next.js frontend",
+          "kind": "interface",
+          "responsibility": "The student workspace: chat, library, planner, revision tracker, flashcards and quizzes.",
+          "inputs": ["Student actions"],
+          "outputs": ["Authenticated API calls"],
+          "technologies": ["Next.js", "React", "TypeScript"],
+          "source": "frontend/app/page.tsx"
+        },
+        {
+          "id": "fastapi",
+          "label": "FastAPI backend",
+          "kind": "server",
+          "responsibility": "Routes for accounts, documents, chat and streaming chat, flashcards, quizzes and progress.",
+          "inputs": ["API requests"],
+          "outputs": ["JSON and streamed answers"],
+          "technologies": ["FastAPI", "Python"],
+          "source": "backend/app/main.py"
+        },
+        {
+          "id": "auth",
+          "label": "Student accounts",
+          "kind": "service",
+          "responsibility": "Hashes passwords with PBKDF2 and issues HMAC-signed tokens checked on protected routes.",
+          "inputs": ["Credentials", "Bearer tokens"],
+          "outputs": ["Signed token", "Current user"],
+          "technologies": ["Python"],
+          "source": "backend/app/main.py"
+        },
+        {
+          "id": "pdf",
+          "label": "PDF processing",
+          "kind": "pipeline",
+          "responsibility": "Validates the upload, opens it with PyMuPDF and extracts the text of each page.",
+          "inputs": ["Uploaded PDF"],
+          "outputs": ["Page text", "Saved file"],
+          "technologies": ["PyMuPDF"],
+          "source": "backend/app/main.py"
+        },
+        {
+          "id": "uploads",
+          "label": "Uploaded files",
+          "kind": "data",
+          "responsibility": "Keeps the original PDFs on disk, so the complete document can be sent to Gemini.",
+          "inputs": ["PDF bytes"],
+          "outputs": ["PDF for the model"],
+          "technologies": ["File storage"],
+          "source": "backend/app/main.py"
+        },
+        {
+          "id": "chunker",
+          "label": "Chunking",
+          "kind": "pipeline",
+          "responsibility": "Splits page text into 180-word windows that overlap by 30 words.",
+          "inputs": ["Page text"],
+          "outputs": ["Chunks with page numbers"],
+          "technologies": ["Python"],
+          "source": "backend/app/main.py"
+        },
+        {
+          "id": "study",
+          "label": "Library and planner",
+          "kind": "service",
+          "responsibility": "Router for subjects, documents, planner tasks, revision topics and saved conversations.",
+          "inputs": ["Study actions"],
+          "outputs": ["Stored study records"],
+          "technologies": ["FastAPI"],
+          "source": "backend/app/study.py"
+        },
+        {
+          "id": "sqlite",
+          "label": "SQLite database",
+          "kind": "data",
+          "responsibility": "Stores users, documents, chunks, subjects, tasks, conversations, flashcards, quizzes and attempts.",
+          "inputs": ["Application writes"],
+          "outputs": ["Application reads"],
+          "technologies": ["SQLite"],
+          "source": "backend/app/main.py"
+        },
+        {
+          "id": "chat",
+          "label": "Chat orchestration",
+          "kind": "pipeline",
+          "responsibility": "Checks document ownership, builds the query and study-mode instruction, and chooses the model provider.",
+          "inputs": ["Question", "History", "Study mode"],
+          "outputs": ["Prompt arguments"],
+          "technologies": ["Python"],
+          "source": "backend/app/main.py"
+        },
+        {
+          "id": "retrieval",
+          "label": "RAG retrieval",
+          "kind": "pipeline",
+          "responsibility": "Ranks stored chunks by TF-IDF cosine similarity and keeps up to four with a page reference.",
+          "inputs": ["Query", "Stored chunks"],
+          "outputs": ["Page-labelled excerpts"],
+          "technologies": ["RAG", "TF-IDF", "Cosine Similarity", "Scikit-learn"],
+          "source": "backend/app/main.py"
+        },
+        {
+          "id": "gemini",
+          "label": "Gemini API",
+          "kind": "ai",
+          "responsibility": "Writes answers, flashcards and quizzes. With a document selected it also receives the complete PDF. A fallback model is configured.",
+          "inputs": ["Prompt", "Excerpts", "PDF"],
+          "outputs": ["Answers and study items"],
+          "technologies": ["Gemini API", "Google GenAI SDK"],
+          "source": "backend/app/main.py"
+        },
+        {
+          "id": "groq",
+          "label": "Groq (optional)",
+          "kind": "ai",
+          "responsibility": "Handles general chat with no document selected, only when a Groq key is configured.",
+          "inputs": ["Question", "History"],
+          "outputs": ["Streamed answer"],
+          "technologies": ["Groq API"],
+          "source": "backend/app/main.py"
+        },
+        {
+          "id": "quizzes",
+          "label": "Flashcards and quizzes",
+          "kind": "pipeline",
+          "responsibility": "Generates study items from a document, removes near-duplicates, and scores quiz submissions.",
+          "inputs": ["Document", "Count"],
+          "outputs": ["Flashcards, quizzes and scores"],
+          "technologies": ["Python", "Gemini API"],
+          "source": "backend/app/main.py"
+        },
+        {
+          "id": "fallback",
+          "label": "Local fallback",
+          "kind": "service",
+          "responsibility": "When Gemini is unavailable, shows retrieved source text directly and builds study items from stored chunks.",
+          "inputs": ["Retrieved excerpts", "Stored chunks"],
+          "outputs": ["Labelled source text"],
+          "technologies": ["Python"],
+          "source": "backend/app/main.py"
+        }
+      ],
+      "system": {
+        "cols": 4,
+        "rows": 3,
+        "at": {
+          "frontend": [0, 1],
+          "fastapi": [1, 1],
+          "pdf": [2, 0],
+          "sqlite": [3, 0],
+          "retrieval": [2, 1],
+          "gemini": [3, 1],
+          "quizzes": [2, 2]
+        },
+        "edges": [
+          ["frontend", "fastapi", "authenticated requests"],
+          ["fastapi", "pdf", "uploads"],
+          ["pdf", "sqlite", "chunks"],
+          ["fastapi", "retrieval", "questions"],
+          ["sqlite", "retrieval", "stored chunks"],
+          ["retrieval", "gemini", "excerpts"],
+          ["fastapi", "quizzes", "study requests"],
+          ["quizzes", "gemini", "generation"]
+        ]
+      },
+      "engineering": {
+        "cols": 5,
+        "rows": 4,
+        "at": {
+          "uploads": [1, 0],
+          "pdf": [2, 0],
+          "chunker": [3, 0],
+          "frontend": [0, 1],
+          "fastapi": [1, 1],
+          "study": [2, 1],
+          "sqlite": [3, 1],
+          "auth": [0, 2],
+          "chat": [2, 2],
+          "retrieval": [3, 2],
+          "fallback": [4, 2],
+          "quizzes": [1, 3],
+          "gemini": [2, 3],
+          "groq": [3, 3]
+        },
+        "edges": [
+          ["frontend", "fastapi", "authenticated requests"],
+          ["fastapi", "auth", "resolves the user"],
+          ["fastapi", "pdf", "POST /api/documents/upload"],
+          ["pdf", "uploads", "original file"],
+          ["pdf", "chunker", "page text"],
+          ["chunker", "sqlite", "chunks table"],
+          ["fastapi", "study", "/api/study routes"],
+          ["study", "sqlite", "records"],
+          ["fastapi", "chat", "POST /api/chat"],
+          ["chat", "retrieval", "query"],
+          ["sqlite", "retrieval", "stored chunks"],
+          ["retrieval", "gemini", "excerpts and question"],
+          ["retrieval", "fallback", "excerpts, no key set"],
+          ["chat", "groq", "general chat"],
+          ["fastapi", "quizzes", "generate and submit"],
+          ["quizzes", "gemini", "generation"]
+        ],
+        "flows": [
+          {
+            "label": "PDF ingestion",
+            "path": ["fastapi", "pdf", "chunker", "sqlite"]
+          },
+          {
+            "label": "Source-grounded answer",
+            "path": ["fastapi", "chat", "retrieval", "gemini"]
+          }
+        ]
+      }
+    },
+    {
+      "slug": "smartqueue-ai",
+      "summary": "A single-page React application with no backend. Queue state lives in a React Context, persists in the browser, and syncs across open tabs. Queue intelligence is a rule engine over that state.",
+      "nodes": [
+        {
+          "id": "join",
+          "label": "Customer entry",
+          "kind": "interface",
+          "responsibility": "The view where a visitor enters their details, chooses a service and joins a standard or priority queue.",
+          "inputs": ["Name, service, priority"],
+          "outputs": ["Join request"],
+          "technologies": ["React", "TypeScript"],
+          "source": "src/components/JoinQueueView.tsx"
+        },
+        {
+          "id": "token",
+          "label": "Token generation",
+          "kind": "pipeline",
+          "responsibility": "Creates a sequential token such as DOC-109, or PRI-109 for the priority queue.",
+          "inputs": ["Join request"],
+          "outputs": ["Waiting token"],
+          "technologies": ["TypeScript"],
+          "source": "src/context/QueueContext.tsx"
+        },
+        {
+          "id": "context",
+          "label": "Queue management",
+          "kind": "service",
+          "responsibility": "The shared state for tokens and counters. Recalculates estimated waits whenever the queue changes.",
+          "inputs": ["Tokens", "Staff actions"],
+          "outputs": ["Current queue state"],
+          "technologies": ["React Context API", "TypeScript"],
+          "source": "src/context/QueueContext.tsx"
+        },
+        {
+          "id": "admin",
+          "label": "Staff dashboard",
+          "kind": "interface",
+          "responsibility": "Where staff open and close counters, call the next token, and complete, skip or recall tokens.",
+          "inputs": ["Queue state", "Staff actions"],
+          "outputs": ["Dispatch commands"],
+          "technologies": ["React"],
+          "source": "src/components/AdminDashboard.tsx"
+        },
+        {
+          "id": "dispatch",
+          "label": "Staff dispatch",
+          "kind": "pipeline",
+          "responsibility": "Picks the next token: priority first, then the earliest to join. Assigns it to a counter.",
+          "inputs": ["Waiting tokens"],
+          "outputs": ["Called token"],
+          "technologies": ["TypeScript"],
+          "source": "src/context/QueueContext.tsx"
+        },
+        {
+          "id": "counters",
+          "label": "Service counters",
+          "kind": "data",
+          "responsibility": "Multiple desks, each available, busy or closed, with a current token.",
+          "inputs": ["Called tokens"],
+          "outputs": ["Counter status"],
+          "technologies": ["TypeScript"],
+          "source": "src/data/initialData.ts"
+        },
+        {
+          "id": "live",
+          "label": "Public display",
+          "kind": "interface",
+          "responsibility": "Shows who is being served, with a fullscreen kiosk mode.",
+          "inputs": ["Queue state"],
+          "outputs": ["On-screen display"],
+          "technologies": ["React"],
+          "source": "src/components/LiveQueueDisplay.tsx"
+        },
+        {
+          "id": "sound",
+          "label": "Announcements",
+          "kind": "service",
+          "responsibility": "Plays chimes with the Web Audio API and speaks token numbers with speech synthesis.",
+          "inputs": ["Called token"],
+          "outputs": ["Chime and spoken call"],
+          "technologies": ["Web Audio API", "Speech Synthesis"],
+          "source": "src/utils/sound.ts"
+        },
+        {
+          "id": "engine",
+          "label": "Queue intelligence engine",
+          "kind": "ai",
+          "responsibility": "A rule engine: derives congestion, clearance time, bottlenecks and staffing suggestions, and answers staff questions by keyword. It uses no trained model.",
+          "inputs": ["Tokens, counters, services"],
+          "outputs": ["Analytics and insights"],
+          "technologies": ["TypeScript"],
+          "source": "src/utils/aiEngine.ts"
+        },
+        {
+          "id": "insights",
+          "label": "AI insights view",
+          "kind": "output",
+          "responsibility": "Presents the engine's insights, a staff question box and a traffic-surge simulation.",
+          "inputs": ["Insights"],
+          "outputs": ["Staff guidance"],
+          "technologies": ["React", "Lucide React"],
+          "source": "src/components/AIInsightsView.tsx"
+        },
+        {
+          "id": "analytics",
+          "label": "Analytics",
+          "kind": "output",
+          "responsibility": "Reports waiting and service times, throughput, priority share and no-shows, with CSV and JSON export.",
+          "inputs": ["Queue analytics"],
+          "outputs": ["Charts and exports"],
+          "technologies": ["React"],
+          "source": "src/components/AnalyticsView.tsx"
+        },
+        {
+          "id": "storage",
+          "label": "Browser storage",
+          "kind": "data",
+          "responsibility": "Persists tokens and counters in localStorage, and uses storage events to keep open tabs in sync.",
+          "inputs": ["Queue state"],
+          "outputs": ["Restored and synced state"],
+          "technologies": ["localStorage"],
+          "source": "src/context/QueueContext.tsx"
+        }
+      ],
+      "system": {
+        "cols": 4,
+        "rows": 2,
+        "at": {
+          "join": [0, 0],
+          "admin": [0, 1],
+          "context": [1, 0],
+          "counters": [1, 1],
+          "engine": [2, 0],
+          "live": [2, 1],
+          "analytics": [3, 0]
+        },
+        "edges": [
+          ["join", "context", "new tokens"],
+          ["admin", "counters", "dispatch"],
+          ["admin", "context", "staff actions"],
+          ["context", "engine", "queue state"],
+          ["context", "live", "who is being served"],
+          ["engine", "analytics", "insights and metrics"]
+        ]
+      },
+      "engineering": {
+        "cols": 5,
+        "rows": 3,
+        "at": {
+          "join": [0, 0],
+          "token": [1, 0],
+          "live": [3, 0],
+          "sound": [0, 2],
+          "admin": [0, 1],
+          "dispatch": [1, 1],
+          "context": [2, 1],
+          "engine": [3, 1],
+          "insights": [4, 1],
+          "counters": [1, 2],
+          "storage": [2, 2],
+          "analytics": [4, 2]
+        },
+        "edges": [
+          ["join", "token", "join request"],
+          ["token", "context", "waiting token"],
+          ["admin", "dispatch", "call next"],
+          ["dispatch", "context", "called token"],
+          ["dispatch", "counters", "assigned counter"],
+          ["context", "live", "being served"],
+          ["dispatch", "sound", "called token"],
+          ["context", "storage", "persist and sync"],
+          ["context", "engine", "queue state"],
+          ["engine", "insights", "insights"],
+          ["engine", "analytics", "metrics"]
+        ],
+        "flows": [
+          {
+            "label": "Visitor journey",
+            "path": ["join", "token", "context", "live"]
+          },
+          {
+            "label": "Queue intelligence",
+            "path": ["context", "engine", "insights"]
+          }
+        ]
+      }
+    },
+    {
+      "slug": "pennybloom",
+      "summary": "One dependency-free Python core with two interfaces on top: a command-line app and a React web app that reaches the same code through a thin FastAPI layer. There are no accounts and no database: everything is stored in local JSON files.",
+      "nodes": [
+        {
+          "id": "cli",
+          "label": "Command-line app",
+          "kind": "interface",
+          "responsibility": "A menu-driven interface to every feature. It needs only the Python standard library.",
+          "inputs": ["Menu choices"],
+          "outputs": ["Text reports and tables"],
+          "technologies": ["Python"],
+          "source": "finance_tracker/main.py"
+        },
+        {
+          "id": "web",
+          "label": "React web app",
+          "kind": "interface",
+          "responsibility": "Pages for the dashboard, transactions, reports, budgets, recurring rules, and data and backups, with charts and animated figures.",
+          "inputs": ["User actions", "JSON from the API"],
+          "outputs": ["Requests to /api"],
+          "technologies": ["React", "TypeScript", "Vite", "Tailwind CSS", "Recharts", "Motion"],
+          "source": "frontend/src/App.tsx"
+        },
+        {
+          "id": "insight",
+          "label": "Insight card",
+          "kind": "output",
+          "responsibility": "Writes short observations from the user's own figures, using fixed rules. It involves no AI.",
+          "inputs": ["Statistics", "Monthly summary", "Budget status"],
+          "outputs": ["A headline and up to three observations"],
+          "technologies": ["TypeScript"],
+          "source": "frontend/src/lib/insights.ts"
+        },
+        {
+          "id": "fastapi",
+          "label": "FastAPI layer",
+          "kind": "server",
+          "responsibility": "Maps HTTP routes to the shared service and turns its exceptions into status codes. It contains no business logic.",
+          "inputs": ["HTTP requests"],
+          "outputs": ["JSON and file downloads"],
+          "technologies": ["FastAPI", "Pydantic", "Uvicorn"],
+          "source": "backend/app/main.py"
+        },
+        {
+          "id": "service",
+          "label": "PennyBloom service",
+          "kind": "service",
+          "responsibility": "The facade both interfaces call, so every rule has exactly one implementation. It also logs activity and coordinates imports, exports and backups.",
+          "inputs": ["Calls from either interface"],
+          "outputs": ["Results and domain errors"],
+          "technologies": ["Python"],
+          "source": "finance_tracker/service.py"
+        },
+        {
+          "id": "transactions",
+          "label": "Transaction manager",
+          "kind": "pipeline",
+          "responsibility": "Adds, edits, deletes, searches, filters and sorts records, each validated and typed as income or expense.",
+          "inputs": ["Transaction fields", "Search filters"],
+          "outputs": ["Validated records", "Totals and savings"],
+          "technologies": ["Python", "Decimal"],
+          "source": "finance_tracker/expense_manager.py"
+        },
+        {
+          "id": "budgets",
+          "label": "Budget manager",
+          "kind": "pipeline",
+          "responsibility": "Tracks monthly budgets: remaining amount, percentage used, a warning at 80% and an alert when exceeded.",
+          "inputs": ["Month and amount", "Month's spending"],
+          "outputs": ["Budget status"],
+          "technologies": ["Python"],
+          "source": "finance_tracker/budget.py"
+        },
+        {
+          "id": "recurring",
+          "label": "Recurring rules",
+          "kind": "pipeline",
+          "responsibility": "Generates due weekly and monthly transactions, and stores the last generated date so a restart never creates duplicates.",
+          "inputs": ["Rules", "Today's date"],
+          "outputs": ["Generated transactions"],
+          "technologies": ["Python"],
+          "source": "finance_tracker/recurring.py"
+        },
+        {
+          "id": "reports",
+          "label": "Reports and statistics",
+          "kind": "pipeline",
+          "responsibility": "Builds monthly summaries, category breakdowns, month comparisons, trends and statistics. The next-month estimate is a plain average of up to three completed months.",
+          "inputs": ["Transactions"],
+          "outputs": ["Summaries and text reports"],
+          "technologies": ["Python"],
+          "source": "finance_tracker/reports.py"
+        },
+        {
+          "id": "files",
+          "label": "File handler",
+          "kind": "service",
+          "responsibility": "Handles atomic JSON saves, CSV import with row-level validation and duplicate detection, CSV and JSON export, and checksummed backups.",
+          "inputs": ["Records to save or import"],
+          "outputs": ["Saved files", "Import results"],
+          "technologies": ["JSON", "CSV", "SHA-256"],
+          "source": "finance_tracker/file_handler.py"
+        },
+        {
+          "id": "store",
+          "label": "JSON data files",
+          "kind": "data",
+          "responsibility": "Local storage for transactions, budgets and recurring rules, plus an activity log. PennyBloom has no database.",
+          "inputs": ["Atomic writes"],
+          "outputs": ["Stored records"],
+          "technologies": ["JSON"],
+          "source": "data/"
+        },
+        {
+          "id": "backups",
+          "label": "Backups and exports",
+          "kind": "data",
+          "responsibility": "Timestamped backups with a checksum manifest, validated before any restore, alongside exported files.",
+          "inputs": ["Backup and export requests"],
+          "outputs": ["Backup folders and exports"],
+          "technologies": ["JSON", "CSV"],
+          "source": "backup/"
+        }
+      ],
+      "system": {
+        "cols": 4,
+        "rows": 3,
+        "at": {
+          "web": [0, 0],
+          "fastapi": [1, 0],
+          "cli": [0, 2],
+          "service": [2, 1],
+          "reports": [3, 0],
+          "files": [3, 1],
+          "store": [3, 2]
+        },
+        "edges": [
+          ["web", "fastapi", "HTTP requests"],
+          ["fastapi", "service", "same core"],
+          ["cli", "service", "same core"],
+          ["service", "reports", "summaries"],
+          ["service", "files", "saves and backups"],
+          ["files", "store", "atomic writes"]
+        ]
+      },
+      "engineering": {
+        "cols": 5,
+        "rows": 4,
+        "at": {
+          "cli": [0, 0],
+          "web": [0, 2],
+          "insight": [0, 3],
+          "fastapi": [1, 2],
+          "service": [2, 1.5],
+          "transactions": [3, 0],
+          "budgets": [3, 1],
+          "recurring": [3, 2],
+          "reports": [3, 3],
+          "store": [4, 0],
+          "files": [4, 1.5],
+          "backups": [4, 3]
+        },
+        "edges": [
+          ["cli", "service", "direct calls"],
+          ["web", "fastapi", "HTTP /api"],
+          ["web", "insight", "statistics"],
+          ["fastapi", "service", "direct calls"],
+          ["service", "transactions", "records"],
+          ["service", "budgets", "monthly limits"],
+          ["service", "recurring", "due rules"],
+          ["service", "reports", "summaries"],
+          ["service", "files", "import, export, backup"],
+          ["transactions", "files", "saves"],
+          ["budgets", "files", "saves"],
+          ["recurring", "files", "saves"],
+          ["files", "store", "atomic writes"],
+          ["files", "backups", "checksummed copies"]
+        ],
+        "flows": [
+          {
+            "label": "Save a transaction",
+            "path": ["web", "fastapi", "service", "transactions", "files", "store"]
+          },
+          {
+            "label": "Monthly report",
+            "path": ["web", "fastapi", "service", "reports"]
+          }
+        ]
+      }
+    }
+  ]
+}

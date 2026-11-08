@@ -1,0 +1,65 @@
+# dependencies
+node_modules/
+
+# Next.js build output
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# generated build-time database (rebuilt from content/*.json)
+data/*.db
+data/*.db-journal
+
+# private source material: never commit or publish
+private/
+*.pdf
+!public/resume/*.pdf
+_resume_extract.txt
+
+# local environment files
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+
+# test and audit output
+playwright-report/
+test-results/
+blob-report/
+lighthouse-reports/
+coverage/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+
+# Databases and backups, wherever they are generated
+data/backups/
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+*.bak
+
+# Local environment files (the documented template stays tracked)
+.env*
+!.env.example
+
+# Logs and temporary files
+*.log
+tmp/
+.tmp/
+
+# Hosting tool state
+.vercel/
+.netlify/
+
+# Private planning material and outdated screenshots: they contain personal contact details
+planning/
+docs/screenshots/
+
+# Local AI coding-agent notes, written by `next dev` (agentRules); not part of the site
+AGENTS.md
+CLAUDE.md

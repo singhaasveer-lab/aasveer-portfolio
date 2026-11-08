@@ -1,0 +1,474 @@
+/*
+ * The Engineering Casebook: an editorial case archive. A row of case files, then the opened case
+ * as a dossier with five numbered chapters and margin notes. Tokens come from globals.css.
+ */
+@layer components {
+  .cb-lede {
+    max-width: 60ch;
+    margin-top: -24px;
+    margin-bottom: 40px;
+    font-size: clamp(1.05rem, 1.4vw, 1.2rem);
+    line-height: 1.6;
+    color: var(--text-muted);
+  }
+  .cb {
+    position: relative;
+  }
+
+  /* ---- The archive ---- */
+  .cb-archive {
+    display: grid;
+    gap: 18px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  @media (min-width: 900px) {
+    .cb-archive {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: clamp(16px, 2vw, 28px);
+    }
+  }
+  .cb-file {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: clamp(20px, 2.4vw, 30px);
+    border: 1px solid var(--line);
+    background:
+      linear-gradient(rgb(200 214 255 / 0.035) 1px, transparent 1px) 0 0 / 100% 26px,
+      linear-gradient(90deg, rgb(200 214 255 / 0.035) 1px, transparent 1px) 0 0 / 26px 100%,
+      rgb(8 12 24 / 0.7);
+    transition:
+      border-color var(--dur-fast) var(--ease-out),
+      transform var(--dur-base) var(--ease-out);
+  }
+  /* The file tab: a short cyan rule across the top edge. */
+  .cb-file::before {
+    content: "";
+    position: absolute;
+    top: -1px;
+    left: -1px;
+    width: 64px;
+    height: 2px;
+    background: var(--accent);
+    transition: width var(--dur-base) var(--ease-out);
+  }
+  .cb-file:hover {
+    border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+    transform: translateY(-3px);
+  }
+  .cb-file:hover::before,
+  .cb-file[data-open]::before {
+    width: calc(100% + 2px);
+  }
+  .cb-file[data-open] {
+    border-color: var(--accent);
+    background:
+      linear-gradient(rgb(63 213 245 / 0.05) 1px, transparent 1px) 0 0 / 100% 26px,
+      rgb(10 18 32 / 0.85);
+  }
+  .cb-file-meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 6px 14px;
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .cb-file-meta span:first-child {
+    color: var(--accent-strong);
+  }
+  .cb-file-number {
+    margin-top: 18px;
+    font-family: var(--font-display);
+    font-size: clamp(3.4rem, 6vw, 5rem);
+    font-weight: 300;
+    line-height: 0.9;
+    color: transparent;
+    -webkit-text-stroke: 1px color-mix(in srgb, var(--accent) 70%, transparent);
+  }
+  .cb-file-project {
+    margin-top: 18px;
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent-strong);
+  }
+  .cb-file-title {
+    margin-top: 8px;
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 2.2vw, 1.95rem);
+    font-weight: 380;
+    line-height: 1.12;
+  }
+  .cb-file-intro {
+    margin-top: 12px;
+    margin-bottom: 22px;
+    line-height: 1.6;
+    color: var(--text-muted);
+  }
+  .cb-explore {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    min-height: 48px;
+    margin-top: auto;
+    padding: 0 16px;
+    border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+    border-radius: var(--radius);
+    background: color-mix(in srgb, var(--accent) 6%, transparent);
+    color: var(--accent-strong);
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background-color var(--dur-fast) var(--ease-out);
+  }
+  .cb-explore:hover,
+  .cb-explore[aria-expanded="true"] {
+    background: color-mix(in srgb, var(--accent) 16%, transparent);
+  }
+  .cb-explore-mark {
+    font-size: 1.1rem;
+    line-height: 1;
+  }
+
+  /* ---- The opened case ---- */
+  .cb-panel {
+    scroll-margin-top: calc(var(--header-h) + 20px);
+  }
+  .cb-dossier {
+    position: relative;
+    margin-top: clamp(28px, 4vw, 48px);
+    padding: clamp(22px, 3.4vw, 52px);
+    border: 1px solid var(--line-strong);
+    background:
+      radial-gradient(60% 40% at 100% 0%, rgb(63 213 245 / 0.07), transparent 70%),
+      linear-gradient(rgb(200 214 255 / 0.03) 1px, transparent 1px) 0 0 / 100% 32px,
+      rgb(7 11 22 / 0.92);
+  }
+  .cb-dossier::before,
+  .cb-dossier::after {
+    content: "";
+    position: absolute;
+    width: 26px;
+    height: 26px;
+    pointer-events: none;
+  }
+  .cb-dossier::before {
+    top: -1px;
+    left: -1px;
+    border-top: 2px solid var(--accent);
+    border-left: 2px solid var(--accent);
+  }
+  .cb-dossier::after {
+    right: -1px;
+    bottom: -1px;
+    border-right: 2px solid var(--violet);
+    border-bottom: 2px solid var(--violet);
+  }
+  .cb-dossier-head {
+    position: relative;
+    padding-bottom: clamp(22px, 3vw, 34px);
+    border-bottom: 1px solid var(--line);
+  }
+  .cb-dossier-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    padding-right: 140px;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .cb-dossier-meta span:first-child {
+    color: var(--accent-strong);
+  }
+  .cb-dossier-title {
+    margin-top: 14px;
+    max-width: 22ch;
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4.4vw, 3.6rem);
+    font-weight: 360;
+    line-height: 1.04;
+    outline: none;
+  }
+  .cb-dossier-intro {
+    margin-top: 14px;
+    max-width: 60ch;
+    font-size: clamp(1.02rem, 1.3vw, 1.15rem);
+    line-height: 1.6;
+    color: var(--text-muted);
+  }
+  .cb-close {
+    position: absolute;
+    top: -6px;
+    right: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    padding: 0 14px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    background: none;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .cb-close:hover {
+    border-color: var(--accent);
+    color: var(--accent-strong);
+  }
+  @media (max-width: 599px) {
+    .cb-dossier-meta {
+      padding-right: 0;
+    }
+    .cb-close {
+      position: static;
+      margin-top: 18px;
+    }
+  }
+  .cb-dossier-grid {
+    display: grid;
+    gap: 36px;
+    margin-top: clamp(26px, 3.4vw, 44px);
+  }
+  @media (min-width: 1000px) {
+    .cb-dossier-grid {
+      grid-template-columns: minmax(0, 8fr) minmax(0, 3.4fr);
+      gap: clamp(32px, 4vw, 64px);
+      align-items: start;
+    }
+  }
+
+  /* Chapters: a numbered spine down the left, the text beside it. */
+  .cb-chapters {
+    position: relative;
+    display: grid;
+    gap: clamp(26px, 3vw, 38px);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .cb-chapters::before {
+    content: "";
+    position: absolute;
+    top: 10px;
+    bottom: 10px;
+    left: 1.35rem;
+    width: 1px;
+    background: linear-gradient(180deg, var(--accent), var(--blue) 60%, var(--violet));
+    opacity: 0.55;
+  }
+  .cb-chapter {
+    position: relative;
+    display: grid;
+    grid-template-columns: 2.7rem minmax(0, 1fr);
+    gap: clamp(14px, 2vw, 26px);
+    animation: cb-rise 460ms var(--ease-out) both;
+    animation-delay: calc(var(--i) * 70ms + 80ms);
+  }
+  @keyframes cb-rise {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+  }
+  .cb-chapter-mark {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 2.7rem;
+    height: 2.7rem;
+    border: 1px solid color-mix(in srgb, var(--accent) 60%, transparent);
+    border-radius: 50%;
+    background: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    color: var(--accent-strong);
+  }
+  .cb-chapter-title {
+    padding-top: 0.55rem;
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    font-weight: 400;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent-strong);
+  }
+  .cb-chapter-body p,
+  .cb-chapter-body li {
+    max-width: 66ch;
+    line-height: 1.7;
+    color: var(--text);
+  }
+  .cb-chapter-body p {
+    margin-top: 10px;
+  }
+  .cb-chapter-body ul {
+    display: grid;
+    gap: 10px;
+    margin: 12px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .cb-chapter-body li {
+    position: relative;
+    padding-left: 20px;
+  }
+  .cb-chapter-body li::before {
+    content: "";
+    position: absolute;
+    top: 0.78em;
+    left: 0;
+    width: 9px;
+    height: 1px;
+    background: var(--accent);
+  }
+  /* The takeaway reads as a pull quote. */
+  .cb-chapter[data-chapter="5"] .cb-chapter-body p {
+    font-family: var(--font-display);
+    font-size: clamp(1.25rem, 2vw, 1.6rem);
+    font-weight: 360;
+    line-height: 1.35;
+  }
+
+  /* Margin notes */
+  .cb-margin {
+    display: grid;
+    gap: 26px;
+    padding-top: 4px;
+  }
+  @media (min-width: 1000px) {
+    .cb-margin {
+      position: sticky;
+      top: calc(var(--header-h) + 24px);
+      padding-left: clamp(18px, 2vw, 28px);
+      border-left: 1px solid var(--line);
+    }
+  }
+  .cb-note-label {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .cb-status {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 2px 8px;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .cb-status[data-status="approved"] {
+    border-color: color-mix(in srgb, var(--teal) 70%, transparent);
+    color: var(--teal);
+  }
+  .cb-status[data-status="owner_stated"] {
+    border-color: color-mix(in srgb, var(--blue) 70%, transparent);
+    color: var(--accent-strong);
+  }
+  .cb-note-text {
+    margin-top: 10px;
+    line-height: 1.55;
+    color: var(--text);
+  }
+  .cb-sources {
+    display: grid;
+    gap: 4px;
+    margin: 10px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .cb-sources a {
+    display: grid;
+    gap: 2px;
+    min-height: 44px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line);
+    text-decoration: none;
+  }
+  .cb-source-label {
+    font-size: 0.9rem;
+    color: var(--text);
+  }
+  .cb-source-path {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--accent-strong);
+    overflow-wrap: anywhere;
+  }
+  .cb-sources a:hover .cb-source-label {
+    color: var(--accent-strong);
+  }
+  .cb-project-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    color: var(--accent-strong);
+    font-size: 0.9rem;
+  }
+
+  /* Other cases, at the foot of the dossier */
+  .cb-dossier-foot {
+    display: grid;
+    gap: 12px;
+    margin-top: clamp(30px, 4vw, 48px);
+    padding-top: 22px;
+    border-top: 1px solid var(--line);
+  }
+  @media (min-width: 700px) {
+    .cb-dossier-foot {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  .cb-next {
+    display: grid;
+    gap: 4px;
+    min-height: 44px;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    background: none;
+    color: var(--text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color var(--dur-fast) var(--ease-out);
+  }
+  .cb-next:hover {
+    border-color: var(--accent);
+  }
+  .cb-next-label {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .cb-next-title {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+  }
+  .cb-noscript .cb-dossier {
+    margin-top: 32px;
+  }
+}

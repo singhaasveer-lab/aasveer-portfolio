@@ -1,0 +1,1518 @@
+{
+  "review_notes": [
+    "Every stage is written from the project's own source. Code excerpts are copied from the file named in `source`; nothing here is a benchmark, a measured result or a live response.",
+    "status \"not_used\" records a stage a project does not implement, so the Laboratory never implies that every RAG system has the same parts.",
+    "SmartQueue AI's queue intelligence is rule-based (src/utils/aiEngine.ts). The simulator reuses its formulas and labels every value as a simulation.",
+    "SmartQueue AI's hourly traffic and throughput chart is simulated from session totals in its own source, so the Laboratory says so."
+  ],
+  "modules": [
+    {
+      "id": "rag",
+      "label": "Retrieval-Augmented Generation",
+      "short": "RAG",
+      "command": "EXPLORE RAG",
+      "keywords": [
+        "retrieval",
+        "tf-idf",
+        "cosine",
+        "pdf",
+        "gemini",
+        "wingman",
+        "studyforge",
+        "interviewiq",
+        "keyword",
+        "knowledge base"
+      ],
+      "intro": "Retrieval finds the most relevant text before an answer is written, so the result rests on real source material. Wingman AI and StudyForge AI both retrieve with TF-IDF and cosine similarity, but differ in what they index and in what happens after retrieval. InterviewIQ is simpler again: it ranks paragraphs by keyword matches, with no vectors and no language model. Switch between them to compare.",
+      "layers": [
+        {
+          "id": "ingest",
+          "label": "Ingest",
+          "description": "Prepares source text so it can be searched."
+        },
+        {
+          "id": "retrieve",
+          "label": "Retrieve",
+          "description": "Scores the source text against the question."
+        },
+        {
+          "id": "generate",
+          "label": "Respond",
+          "description": "Turns the retrieved text into what the user sees."
+        }
+      ],
+      "stages": [
+        {
+          "id": "input",
+          "label": "Document input",
+          "layer": "ingest",
+          "concept": "Every retrieval system starts with a defined body of source text. Answers can only be grounded in what was put here.",
+          "notes": [
+            {
+              "project": "wingman-ai",
+              "status": "implemented",
+              "summary": "A curated local knowledge base. Each entry in knowledge_base.json is hand-written guidance with a title, category, tags and content.",
+              "input": "knowledge_base.json, read from disk at retrieval time",
+              "output": "A list of guidance entries",
+              "code": {
+                "source": "core/rag.py",
+                "text": "KB=Path(__file__).resolve().parents[1]/'knowledge_base.json'"
+              }
+            },
+            {
+              "project": "studyforge-ai",
+              "status": "implemented",
+              "summary": "The student's own material. A PDF is uploaded through the FastAPI backend, limited to 20 MB and 1 to 200 pages.",
+              "input": "A PDF sent to POST /api/documents/upload",
+              "output": "PDF bytes, saved under a generated document id",
+              "code": {
+                "source": "backend/app/main.py",
+                "text": "if file.content_type != \"application/pdf\":\n    raise HTTPException(400, \"Please upload a PDF file.\")"
+              }
+            },
+            {
+              "project": "interviewiq",
+              "status": "implemented",
+              "summary": "The candidate's own notes, pasted as text with a title and a category that defaults to study_notes. Each document belongs to one signed-in user.",
+              "input": "A title and text sent to POST /rag/upload",
+              "output": "A Document row owned by that user",
+              "code": {
+                "source": "backend/app/routes/rag.py",
+                "text": "category=req.category or \"study_notes\""
+              }
+            }
+          ]
+        },
+        {
+          "id": "processing",
+          "label": "Document processing",
+          "layer": "ingest",
+          "concept": "Source material is turned into plain text that a vectorizer can read.",
+          "notes": [
+            {
+              "project": "wingman-ai",
+              "status": "implemented",
+              "summary": "Each entry is flattened into one string, so its title, category and tags all count as searchable text alongside the content.",
+              "input": "Knowledge-base entries",
+              "output": "One text string per entry",
+              "code": {
+                "source": "core/rag.py",
+                "text": "texts=[f\"{d['title']} {d['category']} {d['content']} {' '.join(d.get('tags',[]))}\" for d in docs]"
+              }
+            },
+            {
+              "project": "studyforge-ai",
+              "status": "implemented",
+              "summary": "PyMuPDF opens the file, rejects encrypted PDFs and extracts text page by page, so each piece of text keeps its page number.",
+              "input": "PDF bytes",
+              "output": "Plain text for each page",
+              "code": {
+                "source": "backend/app/main.py",
+                "text": "for page_number, page in enumerate(pdf, 1):\n    for text in split_text(page.get_text(\"text\").strip()):"
+              }
+            },
+            {
+              "project": "interviewiq",
+              "status": "not_used",
+              "summary": "No processing step. The notes arrive as plain text, nothing extracts or vectorizes them, and they go straight to chunking.",
+              "input": "Not applicable",
+              "output": "Not applicable"
+            }
+          ]
+        },
+        {
+          "id": "chunking",
+          "label": "Chunking",
+          "layer": "ingest",
+          "concept": "Long documents are cut into smaller passages, so retrieval can return the relevant part and not the whole file. Overlap stops an idea being lost at a boundary.",
+          "notes": [
+            {
+              "project": "wingman-ai",
+              "status": "not_used",
+              "summary": "No chunking. Each knowledge-base entry is already a short, self-contained unit, so one entry is one retrieval unit.",
+              "input": "One text string per entry",
+              "output": "The same strings, unchanged"
+            },
+            {
+              "project": "studyforge-ai",
+              "status": "implemented",
+              "summary": "Page text is split into windows of 180 words that overlap by 30 words, then stored in the SQLite chunks table with the document id and page number.",
+              "input": "Plain text for each page",
+              "output": "Rows in the chunks table",
+              "code": {
+                "source": "backend/app/main.py",
+                "text": "def split_text(text: str, size: int = 180, overlap: int = 30) -> list[str]:\n    words = text.split()\n    return [\" \".join(words[i:i + size]) for i in range(0, len(words), size - overlap)]"
+              }
+            },
+            {
+              "project": "interviewiq",
+              "status": "implemented",
+              "summary": "One chunk per paragraph, split on blank lines, with no overlap. The first five words of each paragraph are also stored as keywords, though search reads the paragraph itself.",
+              "input": "The pasted text",
+              "output": "DocumentChunk rows with an index",
+              "code": {
+                "source": "backend/app/routes/rag.py",
+                "text": "paragraphs = [p.strip() for p in req.content.split(\"\\n\\n\") if p.strip()]"
+              }
+            }
+          ]
+        },
+        {
+          "id": "retrieval",
+          "label": "Retrieval",
+          "layer": "retrieve",
+          "concept": "TF-IDF gives each word a weight: high when it is frequent in one passage but rare across the collection. Cosine similarity then compares the question's vector with each passage's vector and scores how closely they point in the same direction. A simpler system can skip vectors entirely and count keyword matches.",
+          "notes": [
+            {
+              "project": "wingman-ai",
+              "status": "implemented",
+              "summary": "TF-IDF over single words and word pairs, with sublinear term frequency, then cosine similarity. The three highest-scoring entries are returned. The query is the conversation text itself.",
+              "input": "Conversation text and the entry strings",
+              "output": "Top 3 entries with a retrieval_score",
+              "code": {
+                "source": "core/rag.py",
+                "text": "v=TfidfVectorizer(lowercase=True,stop_words='english',ngram_range=(1,2),sublinear_tf=True)\nm=v.fit_transform(texts); q=v.transform([str(query)]); s=cosine_similarity(q,m).flatten(); idx=s.argsort()[::-1][:top_k]"
+              }
+            },
+            {
+              "project": "studyforge-ai",
+              "status": "implemented",
+              "summary": "TF-IDF over the chunks of the selected document with the query included, then cosine similarity. Up to four chunks with a score above zero are kept. The query also carries the student's last four messages, so follow-up questions keep their context.",
+              "input": "The question, recent messages and stored chunks",
+              "output": "Up to 4 chunks with page and score",
+              "code": {
+                "source": "backend/app/main.py",
+                "text": "matrix = TfidfVectorizer(stop_words=\"english\").fit_transform(texts + [question])"
+              }
+            },
+            {
+              "project": "interviewiq",
+              "status": "implemented",
+              "summary": "Keyword matching, with no TF-IDF and no embeddings. Every word of the query found in a paragraph adds 15 points. A match displays as 60 plus those points, capped at 98, so it is a ranking aid and not a measured relevance.",
+              "input": "The query and the user's chunks",
+              "output": "Matching chunks, highest score first",
+              "code": {
+                "source": "backend/app/routes/rag.py",
+                "text": "for t in tokens:\n    if t in content_lower:\n        score += 15"
+              }
+            }
+          ]
+        },
+        {
+          "id": "context",
+          "label": "Relevant context",
+          "layer": "retrieve",
+          "concept": "The retrieved passages are packaged for the next step, along with enough detail to show where they came from.",
+          "notes": [
+            {
+              "project": "wingman-ai",
+              "status": "implemented",
+              "summary": "Retrieved entries travel with the analysis as rag_results, each keeping its title, category and retrieval score. The Dating Tips page also calls the same retrieval function directly.",
+              "input": "Top 3 entries",
+              "output": "rag_results in the analysis result"
+            },
+            {
+              "project": "studyforge-ai",
+              "status": "implemented",
+              "summary": "Each chunk becomes a page-labelled excerpt of up to 500 characters, and the excerpts are joined into the context for the model.",
+              "input": "Up to 4 chunks",
+              "output": "Page-labelled context text",
+              "code": {
+                "source": "backend/app/main.py",
+                "text": "context = \"\\n\\n\".join(f\"Page {item['page']}: {item['excerpt']}\" for item in sources)"
+              }
+            },
+            {
+              "project": "interviewiq",
+              "status": "implemented",
+              "summary": "Each match keeps its document title, category, chunk id and full paragraph, and the list is cut to the requested limit. The knowledge base page asks for five.",
+              "input": "The sorted matches",
+              "output": "Up to the requested number of results",
+              "code": {
+                "source": "backend/app/routes/rag.py",
+                "text": "results.sort(key=lambda x: x[\"score\"], reverse=True)"
+              }
+            }
+          ]
+        },
+        {
+          "id": "generation",
+          "label": "LLM generation",
+          "layer": "generate",
+          "concept": "In a generative RAG system, a language model writes the answer with the retrieved text in its prompt. A system can also stop at retrieval and present the passages directly.",
+          "notes": [
+            {
+              "project": "wingman-ai",
+              "status": "not_used",
+              "summary": "No language model. Wingman AI's next move and reply strategies come from rule-based logic and written templates chosen by its signal classification. Retrieved guidance is presented next to them.",
+              "input": "Not applicable",
+              "output": "Not applicable"
+            },
+            {
+              "project": "studyforge-ai",
+              "status": "implemented",
+              "summary": "Gemini receives the study-mode instruction, the question, recent conversation and the retrieved excerpts. With a document selected, the complete PDF is attached too, so scanned pages and diagrams remain readable to the model.",
+              "input": "Question, context, history and PDF",
+              "output": "A written answer",
+              "code": {
+                "source": "backend/app/main.py",
+                "text": "args = (mode_instruction + \"\\n\\nStudent question: \" + request.question, context, request.history, bool(request.document_id))"
+              }
+            },
+            {
+              "project": "interviewiq",
+              "status": "not_used",
+              "summary": "No language model in this path. The search route calls no model and writes no answer, and the mock interview flow does not read the knowledge base.",
+              "input": "Not applicable",
+              "output": "Not applicable"
+            }
+          ]
+        },
+        {
+          "id": "response",
+          "label": "Source-grounded response",
+          "layer": "generate",
+          "concept": "The user receives a result that can be traced back to its sources.",
+          "notes": [
+            {
+              "project": "wingman-ai",
+              "status": "implemented",
+              "summary": "A structured analysis: vibe, signal values, next move, reply options and the retrieved guidance entries, returned to the Streamlit interface or as JSON from the API.",
+              "input": "Analysis result",
+              "output": "Decision brief with retrieved guidance"
+            },
+            {
+              "project": "studyforge-ai",
+              "status": "implemented",
+              "summary": "The answer is returned with its sources, each carrying a page and excerpt. If no Gemini key is configured, the retrieved source text is shown directly and labelled as such, instead of a generated answer.",
+              "input": "Answer and sources",
+              "output": "Answer with page-level sources",
+              "code": {
+                "source": "backend/app/main.py",
+                "text": "return f\"I found this in your study material:\\n\\n{excerpts}\\n\\nGemini is not configured, so I am showing the retrieved source text directly.\""
+              }
+            },
+            {
+              "project": "interviewiq",
+              "status": "implemented",
+              "summary": "The matching paragraphs themselves, shown with their document title and score, along with the total number of matches. The reader sees their own notes, not a generated answer.",
+              "input": "The limited results",
+              "output": "JSON with the query, results and total_matches",
+              "code": {
+                "source": "backend/app/routes/rag.py",
+                "text": "return {\"query\": req.query, \"results\": results[:req.limit], \"total_matches\": len(results)}"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "llm-evaluation",
+      "label": "LLM Generation & Evaluation",
+      "short": "LLM Evaluation",
+      "command": "EXPLORE LLM EVALUATION",
+      "keywords": [
+        "gemini",
+        "llm",
+        "generation",
+        "evaluation",
+        "scoring",
+        "interview",
+        "interviewiq",
+        "flashcards",
+        "quiz",
+        "personalization",
+        "giftbro",
+        "studyforge"
+      ],
+      "intro": "A language model's output is only useful once the system around it has checked it. InterviewIQ generates questions and then uses a second Gemini step to score the answers. StudyForge AI generates study material and marks quizzes with plain code. GiftBro AI keeps Gemini to one job: explaining a shortlist that has already been ranked. Switch between them to compare.",
+      "layers": [
+        {
+          "id": "prepare",
+          "label": "Prepare",
+          "description": "Sets out what the model is asked to do."
+        },
+        {
+          "id": "generate",
+          "label": "Generate",
+          "description": "Calls the model and checks what comes back."
+        },
+        {
+          "id": "evaluate",
+          "label": "Evaluate",
+          "description": "Judges the person's answers."
+        },
+        {
+          "id": "deliver",
+          "label": "Deliver",
+          "description": "Gives the result to the person."
+        }
+      ],
+      "stages": [
+        {
+          "id": "brief",
+          "label": "Task brief",
+          "layer": "prepare",
+          "concept": "A model does better with a defined task. The brief says what to produce, from what material and in what form.",
+          "notes": [
+            {
+              "project": "interviewiq",
+              "status": "implemented",
+              "summary": "The candidate chooses a role, experience level, interview type, difficulty, question count and skills. A job description and resume context can be added.",
+              "input": "The interview setup form",
+              "output": "A prompt asking for that many questions as JSON",
+              "code": {
+                "source": "backend/app/services/ai_service.py",
+                "text": "Target Role: {role}\nCandidate Experience: {experience}\nInterview Type: {interview_type}\nDifficulty: {difficulty}"
+              }
+            },
+            {
+              "project": "studyforge-ai",
+              "status": "implemented",
+              "summary": "The brief is the student's own PDF, attached to the request. The prompt asks for twice the number needed, between 8 and 16, so weak or repeated items can be thrown away.",
+              "input": "A document id and a count",
+              "output": "A prompt with the PDF attached",
+              "code": {
+                "source": "backend/app/main.py",
+                "text": "candidate_count = min(max(count * 2, 8), 16)"
+              }
+            },
+            {
+              "project": "giftbro-ai",
+              "status": "implemented",
+              "summary": "The recipient's profile and the top five candidates already ranked by the recommender. The prompt says to recommend only those candidates.",
+              "input": "The profile and ranked results",
+              "output": "A prompt holding both",
+              "code": {
+                "source": "gemini_service.py",
+                "text": "Only recommend the supplied candidates."
+              }
+            }
+          ]
+        },
+        {
+          "id": "generation",
+          "label": "Gemini generation",
+          "layer": "generate",
+          "concept": "The model writes its draft. Asking for JSON gives the next step something it can check field by field.",
+          "notes": [
+            {
+              "project": "interviewiq",
+              "status": "implemented",
+              "summary": "Gemini writes the interview as JSON, with multiple-choice and open-ended questions. A failed request is tried up to three times, three seconds apart.",
+              "input": "The prompt",
+              "output": "JSON text holding the questions",
+              "code": {
+                "source": "backend/app/ai/gemini_service.py",
+                "text": "for attempt in range(3):"
+              }
+            },
+            {
+              "project": "studyforge-ai",
+              "status": "implemented",
+              "summary": "Gemini reads the attached PDF and returns a JSON array of flashcards or quiz questions, each naming the page it came from. If the model is busy or retired, a fallback model is tried.",
+              "input": "The PDF and the prompt",
+              "output": "A JSON array of candidate items",
+              "code": {
+                "source": "backend/app/main.py",
+                "text": "config=types.GenerateContentConfig(response_mime_type=\"application/json\", max_output_tokens=8192))"
+              }
+            },
+            {
+              "project": "giftbro-ai",
+              "status": "implemented",
+              "summary": "Gemini returns JSON in a fixed schema: a headline, the best gift, why it fits, personalization and presentation ideas, a message to include, alternatives and a decision note.",
+              "input": "The prompt",
+              "output": "JSON matching RESPONSE_SCHEMA",
+              "code": {
+                "source": "gemini_service.py",
+                "text": "response_schema=RESPONSE_SCHEMA,"
+              }
+            }
+          ]
+        },
+        {
+          "id": "validation",
+          "label": "Output validation",
+          "layer": "generate",
+          "concept": "A model can return the wrong shape or the wrong number of items. Code checks the output before anyone sees it.",
+          "notes": [
+            {
+              "project": "interviewiq",
+              "status": "implemented",
+              "summary": "The result is rejected unless it has exactly the number of questions requested. Each must have text and a valid type, and a multiple-choice question needs four different options that include its correct answer.",
+              "input": "Parsed JSON",
+              "output": "A checked question list, or an error",
+              "code": {
+                "source": "backend/app/services/ai_service.py",
+                "text": "if len(questions) != question_count:\n    raise RuntimeError("
+              }
+            },
+            {
+              "project": "studyforge-ai",
+              "status": "implemented",
+              "summary": "Bad items are skipped, not the whole set. Each needs its required fields and a real page number, a quiz question needs four different options, and items repeating an idea are dropped.",
+              "input": "Parsed JSON",
+              "output": "Up to the requested number of valid items",
+              "code": {
+                "source": "backend/app/main.py",
+                "text": "if type(page) is not int or not 1 <= page <= pages:\n    continue"
+              }
+            },
+            {
+              "project": "giftbro-ai",
+              "status": "implemented",
+              "summary": "The schema sets the shape of the reply, and anything that is not a JSON object is discarded. The candidates are limited by the prompt, not by a check on the reply, while the ranked list itself stays as the recommender made it.",
+              "input": "The JSON reply",
+              "output": "The advice, or None",
+              "code": {
+                "source": "gemini_service.py",
+                "text": "if not isinstance(result, dict):\n    return None"
+              }
+            }
+          ]
+        },
+        {
+          "id": "answers",
+          "label": "Candidate answers",
+          "layer": "evaluate",
+          "concept": "Some systems stop at generation. Others go on to collect a response from the person, which then has to be judged.",
+          "notes": [
+            {
+              "project": "interviewiq",
+              "status": "implemented",
+              "summary": "The candidate answers each question. All the answers are sent together, and a question left unanswered is recorded as skipped.",
+              "input": "The candidate's answers",
+              "output": "An answer for every question",
+              "code": {
+                "source": "backend/app/routes/interview.py",
+                "text": "or \"(Skipped)\""
+              }
+            },
+            {
+              "project": "studyforge-ai",
+              "status": "implemented",
+              "summary": "The student picks an option for each quiz question. Every answer must be one of that question's options.",
+              "input": "The student's chosen options",
+              "output": "An answer for every question",
+              "code": {
+                "source": "backend/app/main.py",
+                "text": "if any(submission.answers.get(q[\"id\"]) not in q[\"options\"] for q in questions):"
+              }
+            },
+            {
+              "project": "giftbro-ai",
+              "status": "not_used",
+              "summary": "Nothing to answer. The person reads the advice, and no response is collected or scored.",
+              "input": "Not applicable",
+              "output": "Not applicable"
+            }
+          ]
+        },
+        {
+          "id": "evaluation",
+          "label": "AI evaluation",
+          "layer": "evaluate",
+          "concept": "A second model call can act as the judge, scoring free text that simple code cannot mark. The scores are the model's judgement, not a measurement.",
+          "notes": [
+            {
+              "project": "interviewiq",
+              "status": "implemented",
+              "summary": "A second Gemini call scores every question from 0 to 100, then gives an overall score and four separate ones: technical, communication, problem solving and confidence. Each must be a number from 0 to 100, or the evaluation is rejected.",
+              "input": "The questions, answers, role and skills",
+              "output": "Scores, strengths, weaknesses, recommendations and per-question feedback",
+              "code": {
+                "source": "backend/app/services/ai_service.py",
+                "text": "if not 0 <= score <= 100:\n    raise RuntimeError("
+              }
+            },
+            {
+              "project": "studyforge-ai",
+              "status": "not_used",
+              "summary": "No AI judge. A quiz is marked by plain code that compares each answer with the stored correct option.",
+              "input": "Not applicable",
+              "output": "Not applicable",
+              "code": {
+                "source": "backend/app/main.py",
+                "text": "score=sum(submission.answers[q[\"id\"]]==q[\"answer\"] for q in questions)"
+              }
+            },
+            {
+              "project": "giftbro-ai",
+              "status": "not_used",
+              "summary": "No evaluation step. Gemini writes advice about the shortlist, and the match scores come from the recommender, not from the model.",
+              "input": "Not applicable",
+              "output": "Not applicable"
+            }
+          ]
+        },
+        {
+          "id": "fallback",
+          "label": "When the model fails",
+          "layer": "deliver",
+          "concept": "A model can be unavailable or return something unusable. A system decides in advance what happens then.",
+          "notes": [
+            {
+              "project": "interviewiq",
+              "status": "not_used",
+              "summary": "No local fallback. After three failed attempts the request fails with an error, because questions and scoring both depend on the model.",
+              "input": "Not applicable",
+              "output": "Not applicable",
+              "code": {
+                "source": "backend/app/ai/gemini_service.py",
+                "text": "f\"Gemini request failed after 3 attempts: {last_error}\""
+              }
+            },
+            {
+              "project": "studyforge-ai",
+              "status": "implemented",
+              "summary": "A local fallback built from the PDF's stored text. Without a key, or when the provider is busy, flashcards are made from the longest sentence in each chunk, and quizzes from the document's own sentences.",
+              "input": "The stored chunks",
+              "output": "Flashcards or a quiz with no model call",
+              "code": {
+                "source": "backend/app/main.py",
+                "text": "gemini_cards = ask_gemini_flashcards(document_id, count)\n\nif gemini_cards:\n\n    return gemini_cards"
+              }
+            },
+            {
+              "project": "giftbro-ai",
+              "status": "implemented",
+              "summary": "The advice is optional. With no key or a failed call the function returns None, and the ranked recommendations stay on the page without it.",
+              "input": "A missing key or a failed call",
+              "output": "None, and the ranked list unchanged",
+              "code": {
+                "source": "gemini_service.py",
+                "text": "except Exception:\n    return None"
+              }
+            }
+          ]
+        },
+        {
+          "id": "feedback",
+          "label": "Feedback and analytics",
+          "layer": "deliver",
+          "concept": "The last step turns output into something the person can use, and a system may keep it to show progress over time.",
+          "notes": [
+            {
+              "project": "interviewiq",
+              "status": "implemented",
+              "summary": "The evaluation is saved with the interview. The analytics page averages scores over time and by difficulty. Topics averaging 75 or more count as strongest, and those under 70 as weak.",
+              "input": "Saved evaluations",
+              "output": "Score history, category averages and topic lists",
+              "code": {
+                "source": "backend/app/routes/analytics.py",
+                "text": "strongest = [t for t, a in sorted(topic_avgs.items(), key=lambda kv: -kv[1]) if a >= 75][:5]"
+              }
+            },
+            {
+              "project": "studyforge-ai",
+              "status": "implemented",
+              "summary": "Each answer comes back with its explanation and source page. A student's first attempt at a quiz is saved, and it earns ten XP per correct answer.",
+              "input": "The marked quiz",
+              "output": "Score, explanations and XP",
+              "code": {
+                "source": "backend/app/main.py",
+                "text": "\"xp_earned\":score*10 if first_attempt else 0"
+              }
+            },
+            {
+              "project": "giftbro-ai",
+              "status": "implemented",
+              "summary": "The advice appears in its own panel beneath the ranked results. Nothing is scored or tracked.",
+              "input": "The advice",
+              "output": "The best gift, why it fits, ideas and a message",
+              "code": {
+                "source": "app.py",
+                "text": "st.session_state.gemini_advice = result"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "nlp",
+      "label": "Natural Language Processing",
+      "short": "NLP",
+      "command": "EXPLORE NLP",
+      "keywords": [
+        "signals",
+        "sentiment",
+        "text",
+        "wingman",
+        "conversation",
+        "classification",
+        "studyforge",
+        "stop words",
+        "similarity"
+      ],
+      "intro": "Wingman AI reads a conversation as a set of measurable signals. Its NLP is deliberately transparent: word lists, counting rules and a weighted score, with no trained language model, so every result can be traced to the text that produced it. StudyForge AI uses simpler text processing for a different job: comparing study questions so that the same idea is not asked twice.",
+      "layers": [
+        {
+          "id": "prepare",
+          "label": "Prepare",
+          "description": "Turns raw text into tokens and lines."
+        },
+        {
+          "id": "analyse",
+          "label": "Analyse",
+          "description": "Measures the signals in the text."
+        },
+        {
+          "id": "decide",
+          "label": "Decide",
+          "description": "Combines the signals into a result."
+        }
+      ],
+      "stages": [
+        {
+          "id": "input",
+          "label": "Text input",
+          "layer": "prepare",
+          "concept": "NLP begins with text. Here it arrives typed in, or as the output of OCR on a screenshot.",
+          "notes": [
+            {
+              "project": "wingman-ai",
+              "status": "implemented",
+              "summary": "The analyze function takes one conversation string. The API limits it to 15,000 characters.",
+              "input": "Conversation text",
+              "output": "A trimmed string",
+              "code": {
+                "source": "api.py",
+                "text": "class AnalyzeRequest(BaseModel):conversation:str=Field(min_length=1,max_length=15000)"
+              }
+            },
+            {
+              "project": "studyforge-ai",
+              "status": "implemented",
+              "summary": "Short study text: the questions of generated flashcards and quizzes, and the sentences of a PDF's stored chunks.",
+              "input": "A flashcard or quiz question",
+              "output": "A string to compare",
+              "code": {
+                "source": "backend/app/main.py",
+                "text": "question = item.get(\"question\")"
+              }
+            }
+          ]
+        },
+        {
+          "id": "preprocessing",
+          "label": "Preprocessing",
+          "layer": "prepare",
+          "concept": "Tokenizing breaks text into comparable units. Lowercasing means 'Great' and 'great' count as the same word.",
+          "notes": [
+            {
+              "project": "wingman-ai",
+              "status": "implemented",
+              "summary": "A regular expression lowercases the text and keeps words and common emoji as tokens. A second pass splits the conversation into non-empty lines, one per visible message.",
+              "input": "Trimmed text",
+              "output": "Tokens and message lines",
+              "code": {
+                "source": "core/coach.py",
+                "text": "def _words(text):\n    return re.findall(\n        r\"[A-Za-z']+|[😂🤣😊😍😘😏😉❤️🔥]\",\n        str(text).lower(),\n    )"
+              }
+            },
+            {
+              "project": "studyforge-ai",
+              "status": "implemented",
+              "summary": "A regular expression lowercases the text and keeps letters and digits. Words of one or two letters and a short stop-word list are dropped, leaving a set of meaningful words.",
+              "input": "A question or sentence",
+              "output": "A set of words",
+              "code": {
+                "source": "backend/app/main.py",
+                "text": "return {word for word in re.findall(r\"[a-z0-9]+\", text.lower()) if len(word) > 2 and word not in _STUDY_STOP_WORDS}"
+              }
+            }
+          ]
+        },
+        {
+          "id": "signals",
+          "label": "Signal analysis",
+          "layer": "analyse",
+          "concept": "Instead of one overall impression, the text is measured along separate dimensions, so a result can be explained one signal at a time.",
+          "notes": [
+            {
+              "project": "wingman-ai",
+              "status": "implemented",
+              "summary": "Separate functions score sentiment from positive and negative word sets, questions, flirt language, reciprocity between speakers and message energy.",
+              "input": "Tokens and message lines",
+              "output": "Five signal scores",
+              "code": {
+                "source": "core/coach.py",
+                "text": "positive = sum(\n    token in POSITIVE_WORDS\n    for token in tokens\n)"
+              }
+            },
+            {
+              "project": "studyforge-ai",
+              "status": "not_used",
+              "summary": "No signal analysis. StudyForge AI does not measure sentiment or tone: it only compares the wording of study items.",
+              "input": "Not applicable",
+              "output": "Not applicable"
+            }
+          ]
+        },
+        {
+          "id": "representation",
+          "label": "Representation",
+          "layer": "analyse",
+          "concept": "Models and rules work on numbers. A representation is the numeric form of the text that later steps use.",
+          "notes": [
+            {
+              "project": "wingman-ai",
+              "status": "implemented",
+              "summary": "The conversation is represented in two ways: as its signal scores, shown as Warmth, Reciprocity, Engagement, Flirt energy and Message energy, and as a TF-IDF vector for retrieval.",
+              "input": "Signal scores and conversation text",
+              "output": "A signal profile and a TF-IDF query vector"
+            },
+            {
+              "project": "studyforge-ai",
+              "status": "implemented",
+              "summary": "Two forms: a set of words for comparing two study items, and TF-IDF vectors for retrieval over a document's chunks.",
+              "input": "The word sets",
+              "output": "Shared words and their overlap",
+              "code": {
+                "source": "backend/app/main.py",
+                "text": "overlap = shared / len(left_words | right_words)"
+              }
+            }
+          ]
+        },
+        {
+          "id": "classification",
+          "label": "Classification and scoring",
+          "layer": "decide",
+          "concept": "A weighted score combines the signals. Thresholds then turn that number into a category a person can act on.",
+          "notes": [
+            {
+              "project": "wingman-ai",
+              "status": "implemented",
+              "summary": "Four signals are combined with fixed weights. A score of 0.50 or above reads as positive momentum, 0.25 or above as mixed but workable, and anything lower as low or cautious energy.",
+              "input": "Signal scores",
+              "output": "A vibe label and a confidence value",
+              "weights": [
+                {
+                  "label": "Sentiment",
+                  "value": 0.35
+                },
+                {
+                  "label": "Reciprocity",
+                  "value": 0.3
+                },
+                {
+                  "label": "Flirt",
+                  "value": 0.2
+                },
+                {
+                  "label": "Questions",
+                  "value": 0.15
+                }
+              ],
+              "code": {
+                "source": "core/coach.py",
+                "text": "score = (\n    sentiment * 0.35\n    + reciprocity * 0.30\n    + flirt * 0.20\n    + questions * 0.15\n)"
+              }
+            },
+            {
+              "project": "studyforge-ai",
+              "status": "implemented",
+              "summary": "A yes or no decision with no weighted score. Two questions count as the same when enough of their words overlap, such as at least two shared words with an overlap of 0.5, or an overlap of 0.68.",
+              "input": "Two questions",
+              "output": "Similar, or distinct",
+              "code": {
+                "source": "backend/app/main.py",
+                "text": "or (shared >= 2 and overlap >= 0.5)\nor overlap >= 0.68"
+              }
+            }
+          ]
+        },
+        {
+          "id": "output",
+          "label": "Output",
+          "layer": "decide",
+          "concept": "The final step turns measurements into something useful for the person reading it.",
+          "notes": [
+            {
+              "project": "wingman-ai",
+              "status": "implemented",
+              "summary": "The classification selects a next move, reasoning and written reply strategies. Conversation DNA presents the signal profile, and retrieved guidance from the knowledge base is added to the same result.",
+              "input": "Vibe, signals and retrieved entries",
+              "output": "Decision brief and reply strategies"
+            },
+            {
+              "project": "studyforge-ai",
+              "status": "implemented",
+              "summary": "A set of distinct study items. A question similar to one already kept is dropped, and collection stops at the number requested.",
+              "input": "Candidate items",
+              "output": "Up to the requested number of distinct items",
+              "code": {
+                "source": "backend/app/main.py",
+                "text": "if any(study_text_is_similar(question, existing[\"question\"]) for existing in kept):\n    continue"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "recommendation",
+      "label": "Recommendation Systems",
+      "short": "Recommendation",
+      "command": "EXPLORE RECOMMENDATIONS",
+      "keywords": ["giftbro", "gift", "ranking", "hybrid", "tf-idf", "gemini", "catalogue"],
+      "intro": "GiftBro AI separates two jobs. A deterministic machine-learning engine ranks real items from its catalogue. Gemini then writes around that shortlist and is told not to invent products. The language model never decides what exists.",
+      "layers": [
+        {
+          "id": "ranking",
+          "label": "Product ranking",
+          "description": "Deterministic scoring of real catalogue items. Decides what is recommended."
+        },
+        {
+          "id": "personalization",
+          "label": "Gemini personalization",
+          "description": "Optional generated advice around the ranked items. Decides how it is explained."
+        }
+      ],
+      "stages": [
+        {
+          "id": "recipient",
+          "label": "Recipient information",
+          "layer": "ranking",
+          "concept": "A recommender needs a profile to compare items against. The more specific the profile, the more useful the comparison.",
+          "notes": [
+            {
+              "project": "giftbro-ai",
+              "status": "implemented",
+              "summary": "The user describes the recipient: relationship, occasion, interests, personality, gift style, personalization level, budget, things to avoid and a recommendation strategy.",
+              "input": "Form values",
+              "output": "A recipient profile"
+            }
+          ]
+        },
+        {
+          "id": "preferences",
+          "label": "Preference analysis",
+          "layer": "ranking",
+          "concept": "Free-form answers are normalized so they can be compared with catalogue text on equal terms.",
+          "notes": [
+            {
+              "project": "giftbro-ai",
+              "status": "implemented",
+              "summary": "Text is lowercased and stripped of punctuation, then the profile fields are joined into one query string for the vectorizer.",
+              "input": "Recipient profile",
+              "output": "A normalized profile string",
+              "code": {
+                "source": "recommender.py",
+                "text": "user_profile = \" \".join([\n    normalize_text(occasion),\n    normalize_text(relationship),\n    normalize_text(interests),\n    normalize_text(personality),\n    normalize_text(gift_style),\n]).strip()"
+              }
+            }
+          ]
+        },
+        {
+          "id": "filtering",
+          "label": "Candidate filtering",
+          "layer": "ranking",
+          "concept": "Items that cannot be recommended are removed early, so everything after this point works from a valid pool.",
+          "notes": [
+            {
+              "project": "giftbro-ai",
+              "status": "implemented",
+              "summary": "The pool is gifts.csv. Excluded names and anything matching the avoid list are removed, and the budget pool keeps items at or under budget. If nothing is affordable, the cheapest items are kept so the user still gets a result.",
+              "input": "gifts.csv and the profile",
+              "output": "Candidate items from the catalogue",
+              "code": {
+                "source": "recommender.py",
+                "text": "affordable = gifts[\n    gifts[\"price\"] <= budget\n].copy()"
+              }
+            }
+          ]
+        },
+        {
+          "id": "similarity",
+          "label": "TF-IDF and similarity scoring",
+          "layer": "ranking",
+          "concept": "Each item's text and the profile become TF-IDF vectors. Cosine similarity measures how close they are, which captures overlap that a single field match would miss.",
+          "notes": [
+            {
+              "project": "giftbro-ai",
+              "status": "implemented",
+              "summary": "Name, category, occasion, relationship, interests, personality and description are combined into one feature text per item. The vectorizer uses single words and word pairs, and cosine similarity gives each item a score from 0 to 1.",
+              "input": "Feature text and profile string",
+              "output": "A cosine score per item",
+              "code": {
+                "source": "recommender.py",
+                "text": "vectorizer = TfidfVectorizer(\n    lowercase=True,\n    stop_words=\"english\",\n    ngram_range=(1, 2),\n    sublinear_tf=True,\n    max_features=15000,\n)"
+              }
+            }
+          ]
+        },
+        {
+          "id": "ranking",
+          "label": "Weighted ranking",
+          "layer": "ranking",
+          "concept": "No single signal decides. Each is multiplied by a fixed weight and added up, so the ranking stays explainable.",
+          "notes": [
+            {
+              "project": "giftbro-ai",
+              "status": "implemented",
+              "summary": "Eight signals are combined with fixed weights, then a bonus for the chosen recommendation strategy is added. A category-diversity pass keeps the shortlist from filling with one kind of gift.",
+              "input": "Signal scores per item",
+              "output": "A ranked shortlist of real items",
+              "weights": [
+                {
+                  "label": "Semantic",
+                  "value": 0.2
+                },
+                {
+                  "label": "Interest",
+                  "value": 0.2
+                },
+                {
+                  "label": "Occasion",
+                  "value": 0.15
+                },
+                {
+                  "label": "Relationship",
+                  "value": 0.12
+                },
+                {
+                  "label": "Personality",
+                  "value": 0.1
+                },
+                {
+                  "label": "Budget",
+                  "value": 0.1
+                },
+                {
+                  "label": "Style",
+                  "value": 0.08
+                },
+                {
+                  "label": "Personalization",
+                  "value": 0.05
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "gemini",
+          "label": "Gemini personalization",
+          "layer": "personalization",
+          "concept": "A language model is good at explaining and phrasing, and unreliable as a source of facts. Giving it a fixed shortlist uses the first strength and avoids the second.",
+          "notes": [
+            {
+              "project": "giftbro-ai",
+              "status": "implemented",
+              "summary": "An optional step in the Streamlit app. Gemini receives the profile and ranked candidates and returns JSON explaining why a gift fits, how to personalize and present it, and a short note to include. Without an API key the app keeps its deterministic advice.",
+              "input": "Profile and ranked candidates",
+              "output": "Personalized advice as JSON",
+              "code": {
+                "source": "gemini_service.py",
+                "text": "Do not invent products, prices, catalogue entries or unavailable facts.\nOnly recommend the supplied candidates."
+              }
+            }
+          ]
+        },
+        {
+          "id": "recommendation",
+          "label": "Recommendation",
+          "layer": "personalization",
+          "concept": "The visitor sees real catalogue items, and any generated text is attached to those items.",
+          "notes": [
+            {
+              "project": "giftbro-ai",
+              "status": "implemented",
+              "summary": "The result is a ranked list of catalogue gifts with a match score and reasons, plus advice from the deterministic coach or Gemini. Recommendations are saved to SQLite history, and favorites can be saved too.",
+              "input": "Ranked items and advice",
+              "output": "Recommended gifts from the catalogue"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "data-analytics",
+      "label": "Data Intelligence & Analytics",
+      "short": "Data Analytics",
+      "command": "EXPLORE DATA ANALYTICS",
+      "keywords": [
+        "data",
+        "analytics",
+        "reports",
+        "budget",
+        "forecast",
+        "trend",
+        "estimate",
+        "backup",
+        "json",
+        "pennybloom",
+        "smartqueue",
+        "wait time"
+      ],
+      "intro": "Neither system here uses a language model: the intelligence is in careful records and plain calculation. PennyBloom turns transactions into budgets, reports and an estimate, with storage built to survive a crash. SmartQueue AI turns token timestamps into queue measures. Switch between them to compare.",
+      "layers": [
+        {
+          "id": "capture",
+          "label": "Capture",
+          "description": "Takes in records and checks them."
+        },
+        {
+          "id": "compute",
+          "label": "Compute",
+          "description": "Applies rules and works out the figures."
+        },
+        {
+          "id": "keep",
+          "label": "Keep",
+          "description": "Stores the data safely."
+        }
+      ],
+      "stages": [
+        {
+          "id": "records",
+          "label": "Records",
+          "layer": "capture",
+          "concept": "Every figure a system reports comes from the records it keeps, so what a record holds decides what can be measured.",
+          "notes": [
+            {
+              "project": "pennybloom",
+              "status": "implemented",
+              "summary": "Each transaction has a date, an amount, a category, a description and a type. Income and expenses share one record shape, and spending figures count expenses only.",
+              "input": "A transaction from the command line or web app",
+              "output": "An Expense record",
+              "code": {
+                "source": "finance_tracker/expense.py",
+                "text": "TRANSACTION_TYPES = (EXPENSE, INCOME)"
+              }
+            },
+            {
+              "project": "smartqueue-ai",
+              "status": "implemented",
+              "summary": "Each token records its status and when it joined, was called and was completed. Those timestamps are what the queue measures are worked out from.",
+              "input": "Staff and visitor actions",
+              "output": "Tokens with a status and timestamps",
+              "code": {
+                "source": "src/utils/aiEngine.ts",
+                "text": "const completedTokens = tokens.filter((t) => t.status === 'completed');"
+              }
+            }
+          ]
+        },
+        {
+          "id": "validation",
+          "label": "Validation",
+          "layer": "capture",
+          "concept": "Bad input is cheapest to stop at the door. Checked records mean later calculations need no guesswork.",
+          "notes": [
+            {
+              "project": "pennybloom",
+              "status": "implemented",
+              "summary": "Amounts are parsed as exact decimals, must be above zero and below a sanity limit, and are rounded to two places. Dates must be real calendar dates, and text fields have length limits.",
+              "input": "Raw input",
+              "output": "A validated record, or a clear error",
+              "code": {
+                "source": "finance_tracker/utils.py",
+                "text": "if amount <= 0:\n    raise ValidationError(f\"{field} must be greater than zero.\")"
+              }
+            },
+            {
+              "project": "smartqueue-ai",
+              "status": "not_used",
+              "summary": "No validation in the analytics. It reads the tokens the application created, as they stand.",
+              "input": "Not applicable",
+              "output": "Not applicable"
+            }
+          ]
+        },
+        {
+          "id": "rules",
+          "label": "Budgets and rules",
+          "layer": "compute",
+          "concept": "Rules turn records into decisions, such as a warning before a limit is reached or an entry created on schedule.",
+          "notes": [
+            {
+              "project": "pennybloom",
+              "status": "implemented",
+              "summary": "A monthly budget warns at 80 percent and alerts when exceeded. Recurring rules create weekly or monthly transactions, and each gets an id from its rule and date, so running them twice cannot create a duplicate.",
+              "input": "Budgets, rules and transactions",
+              "output": "A budget level and any due transactions",
+              "code": {
+                "source": "finance_tracker/recurring.py",
+                "text": "id=f\"{rule.id}-{d:%Y%m%d}\") for d in due]"
+              }
+            },
+            {
+              "project": "smartqueue-ai",
+              "status": "not_used",
+              "summary": "No budgets or scheduled entries. Its dispatch and congestion rules are in the Queue Intelligence module.",
+              "input": "Not applicable",
+              "output": "Not applicable"
+            }
+          ]
+        },
+        {
+          "id": "reports",
+          "label": "Reports and measures",
+          "layer": "compute",
+          "concept": "A report answers a specific question from the records, such as where the money went or how long people waited.",
+          "notes": [
+            {
+              "project": "pennybloom",
+              "status": "implemented",
+              "summary": "Monthly summaries, category breakdowns and month-on-month comparisons, all computed from saved transactions. Savings are income minus expenses.",
+              "input": "Saved transactions",
+              "output": "Totals, categories and comparisons",
+              "code": {
+                "source": "finance_tracker/reports.py",
+                "text": "\"savings\": income - total,  # income - expenses"
+              }
+            },
+            {
+              "project": "smartqueue-ai",
+              "status": "implemented",
+              "summary": "Average wait runs from joining to being called, blended with the elapsed time of people still waiting. Average service time, priority share of the waiting queue and the skipped (no-show) count come from the tokens too. With no data yet, wait and service fall back to fixed defaults.",
+              "input": "All tokens",
+              "output": "Averages, priority share and counts",
+              "code": {
+                "source": "src/utils/aiEngine.ts",
+                "text": "const waitMins = Math.max(1, Math.round((t.calledAt - t.joinedAt) / (60 * 1000)));"
+              }
+            }
+          ]
+        },
+        {
+          "id": "estimate",
+          "label": "Trends and estimates",
+          "layer": "compute",
+          "concept": "Looking ahead needs care. A simple, stated method is easier to trust than a complicated one, and an estimate should be labelled as one.",
+          "notes": [
+            {
+              "project": "pennybloom",
+              "status": "implemented",
+              "summary": "A least-squares slope over monthly spending reads as increasing, decreasing or stable. The next-month estimate is the mean of up to the last three completed months, and the app labels it as an estimate.",
+              "input": "Monthly spending totals",
+              "output": "A trend direction and an estimate",
+              "code": {
+                "source": "finance_tracker/reports.py",
+                "text": "window = list(complete.items())[-3:]"
+              }
+            },
+            {
+              "project": "smartqueue-ai",
+              "status": "implemented",
+              "summary": "Time to clear the backlog divides the waiting work by the open counters. The hourly traffic and throughput chart is a simulation derived from current session totals, as its source says, and not a measured history.",
+              "input": "Waiting tokens and open counters",
+              "output": "A clearance estimate and simulated hourly traffic",
+              "code": {
+                "source": "src/utils/aiEngine.ts",
+                "text": "// Hourly Traffic simulation based on current session"
+              }
+            }
+          ]
+        },
+        {
+          "id": "storage",
+          "label": "Storage and backup",
+          "layer": "keep",
+          "concept": "Data is only useful if it survives. A write that fails halfway must not destroy what was there before.",
+          "notes": [
+            {
+              "project": "pennybloom",
+              "status": "implemented",
+              "summary": "JSON files written atomically: to a temporary file, flushed to disk, then swapped into place, so a crash cannot leave a half-written file. Backups carry a manifest of SHA-256 checksums and are verified when inspected.",
+              "input": "The records to save",
+              "output": "Replaced JSON files and verified backups",
+              "code": {
+                "source": "finance_tracker/file_handler.py",
+                "text": "os.fsync(tmp.fileno())\n        os.replace(tmp_name, path)"
+              }
+            },
+            {
+              "project": "smartqueue-ai",
+              "status": "implemented",
+              "summary": "Tokens and counters are kept in the browser's localStorage, with no server or backups. The analytics page can export them as CSV or JSON.",
+              "input": "The current tokens and counters",
+              "output": "Browser storage and optional exports",
+              "code": {
+                "source": "src/context/QueueContext.tsx",
+                "text": "localStorage.setItem(TOKENS_STORAGE_KEY, JSON.stringify(tokens));"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "queue",
+      "label": "Rule-based Queue Intelligence",
+      "short": "Queue Intelligence",
+      "command": "OPEN SMARTQUEUE AI",
+      "keywords": ["smartqueue", "tokens", "counters", "congestion", "dispatch", "simulation"],
+      "intro": "SmartQueue AI replaces a physical line with digital tokens. Its queue intelligence is a transparent rule engine with no trained model: it calculates congestion, waits and clearance from the live queue state. The simulator below runs those same formulas in your browser.",
+      "simulator": "queue",
+      "layers": [
+        {
+          "id": "visitor",
+          "label": "Visitor flow",
+          "description": "What happens from the visitor's side."
+        },
+        {
+          "id": "intelligence",
+          "label": "Queue intelligence",
+          "description": "Rules that read the queue state."
+        },
+        {
+          "id": "operations",
+          "label": "Staff operations",
+          "description": "How staff move tokens to counters."
+        }
+      ],
+      "stages": [
+        {
+          "id": "entry",
+          "label": "Customer entry",
+          "layer": "visitor",
+          "concept": "A visitor joins from a screen, so they no longer need to hold a place in a physical line.",
+          "notes": [
+            {
+              "project": "smartqueue-ai",
+              "status": "implemented",
+              "summary": "The visitor enters their details, chooses a service category and joins a standard or priority queue.",
+              "input": "Name, service and priority choice",
+              "output": "A join request"
+            }
+          ]
+        },
+        {
+          "id": "token",
+          "label": "Digital token",
+          "layer": "visitor",
+          "concept": "A token is the visitor's place in line, in a form every screen in the system can read.",
+          "notes": [
+            {
+              "project": "smartqueue-ai",
+              "status": "implemented",
+              "summary": "Token numbers increase in sequence. The prefix is the service code, or PRI for the priority queue.",
+              "input": "Join request",
+              "output": "A waiting token such as DOC-109",
+              "code": {
+                "source": "src/context/QueueContext.tsx",
+                "text": "const prefix = params.priority === 'priority' ? 'PRI' : service.code;\nconst tokenNumber = `${prefix}-${nextSeq}`;"
+              }
+            }
+          ]
+        },
+        {
+          "id": "tracking",
+          "label": "Queue tracking",
+          "layer": "visitor",
+          "concept": "Waiting feels shorter when you can see your position. Estimates are recalculated whenever the queue changes.",
+          "notes": [
+            {
+              "project": "smartqueue-ai",
+              "status": "implemented",
+              "summary": "Waiting tokens are sorted with priority first, then by joining time. Each estimate uses the token's position, its service's average duration and the number of open counters. State is stored in the browser and synchronized across tabs.",
+              "input": "Tokens and open counters",
+              "output": "Position and estimated wait",
+              "code": {
+                "source": "src/context/QueueContext.tsx",
+                "text": "const estimated = Math.max(1, Math.round((cumulativeMinutes + (index * duration)) / activeCountersCount));"
+              }
+            }
+          ]
+        },
+        {
+          "id": "intelligence",
+          "label": "Queue intelligence",
+          "layer": "intelligence",
+          "concept": "A rule engine turns queue state into insights a manager can use. Each rule can be read and checked, unlike the output of a trained model.",
+          "notes": [
+            {
+              "project": "smartqueue-ai",
+              "status": "implemented",
+              "summary": "Congestion comes from the ratio of waiting visitors to open counters: Moderate from 1.5, High from 3, Severe above 5. The engine also estimates clearance time from the service backlog, flags priority load and bottlenecks, recommends opening or closing counters, and answers staff questions by keyword.",
+              "input": "Tokens, counters and services",
+              "output": "Congestion level and insights",
+              "code": {
+                "source": "src/utils/aiEngine.ts",
+                "text": "const ratio = totalWaiting / Math.max(1, activeCounters);\nif (ratio > 5) {\n  congestionLevel = 'Severe';\n} else if (ratio >= 3) {\n  congestionLevel = 'High';\n} else if (ratio >= 1.5) {\n  congestionLevel = 'Moderate';\n}"
+              }
+            }
+          ]
+        },
+        {
+          "id": "dispatch",
+          "label": "Smart dispatch",
+          "layer": "operations",
+          "concept": "Dispatch decides who goes next. The rule has to be predictable, because people in line can see it working.",
+          "notes": [
+            {
+              "project": "smartqueue-ai",
+              "status": "implemented",
+              "summary": "Staff call the next token. Priority tokens go first, then the earliest to join. The token goes to the chosen counter or the first available one, with a chime and a spoken announcement.",
+              "input": "Waiting tokens and a staff action",
+              "output": "A called token at a counter",
+              "code": {
+                "source": "src/context/QueueContext.tsx",
+                "text": "if (a.priority === 'priority' && b.priority !== 'priority') return -1;\nif (a.priority !== 'priority' && b.priority === 'priority') return 1;\nreturn a.joinedAt - b.joinedAt;"
+              }
+            }
+          ]
+        },
+        {
+          "id": "counter",
+          "label": "Service counter",
+          "layer": "operations",
+          "concept": "Each counter is a separate server with its own state. Opening or closing one changes every wait in the queue.",
+          "notes": [
+            {
+              "project": "smartqueue-ai",
+              "status": "implemented",
+              "summary": "Staff open and close counters, and complete, skip or recall tokens. A public display with a fullscreen mode shows who is being served. Completed tokens feed the analytics view, which exports CSV and JSON.",
+              "input": "A called token",
+              "output": "Completed, skipped or recalled token"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ocr",
+      "label": "OCR and Document Intelligence",
+      "short": "OCR",
+      "command": "EXPLORE OCR",
+      "keywords": ["screenshot", "image", "tesseract", "text extraction", "wingman", "document"],
+      "intro": "OCR and NLP solve different problems. OCR reads pixels and produces characters, with no idea what they mean. NLP starts from those characters and works out what they signal. Wingman AI chains the two so a screenshot becomes a structured result.",
+      "layers": [
+        {
+          "id": "ocr",
+          "label": "OCR",
+          "description": "Pixels to characters. Answers: what does this image say?"
+        },
+        {
+          "id": "nlp",
+          "label": "NLP",
+          "description": "Characters to meaning. Answers: what does this text signal?"
+        },
+        {
+          "id": "retrieval",
+          "label": "Retrieval",
+          "description": "Adds relevant guidance from the knowledge base."
+        }
+      ],
+      "stages": [
+        {
+          "id": "image",
+          "label": "Image input",
+          "layer": "ocr",
+          "concept": "A screenshot holds its text as pixels. Nothing in the file says which pixels are letters.",
+          "notes": [
+            {
+              "project": "wingman-ai",
+              "status": "implemented",
+              "summary": "A screenshot arrives from the Streamlit page or POST /analyze-screenshot. The API rejects anything that is not an image, and the file is converted to RGB.",
+              "input": "A chat screenshot",
+              "output": "An RGB image",
+              "code": {
+                "source": "api.py",
+                "text": "if not file.content_type or not file.content_type.startswith('image/'):raise HTTPException(status_code=400,detail='Upload an image file.')"
+              }
+            }
+          ]
+        },
+        {
+          "id": "extraction",
+          "label": "OCR extraction",
+          "layer": "ocr",
+          "concept": "OCR finds shapes that look like letters and turns them into characters. It reports what it sees, and has no idea what the words mean.",
+          "notes": [
+            {
+              "project": "wingman-ai",
+              "status": "implemented",
+              "summary": "pytesseract runs the Tesseract OCR engine on the image. If no readable text is found, or Tesseract is not installed, the user gets a clear message instead of an empty analysis.",
+              "input": "An RGB image",
+              "output": "Raw extracted text",
+              "code": {
+                "source": "core/ocr.py",
+                "text": "image = image.convert(\"RGB\")\ntext = pytesseract.image_to_string(image).strip()"
+              }
+            }
+          ]
+        },
+        {
+          "id": "cleanup",
+          "label": "Text cleanup",
+          "layer": "nlp",
+          "concept": "Extracted text carries stray whitespace and blank lines. Cleanup makes it consistent before anything tries to interpret it.",
+          "notes": [
+            {
+              "project": "wingman-ai",
+              "status": "implemented",
+              "summary": "Surrounding whitespace is removed and blank lines are dropped, which leaves one line per visible message for the analysis.",
+              "input": "Raw extracted text",
+              "output": "Clean message lines",
+              "code": {
+                "source": "core/coach.py",
+                "text": "def _lines(text):\n    return [\n        line.strip()\n        for line in str(text).splitlines()\n        if line.strip()\n    ]"
+              }
+            }
+          ]
+        },
+        {
+          "id": "signals",
+          "label": "NLP signal analysis",
+          "layer": "nlp",
+          "concept": "This is the point where the work moves from reading text to interpreting it.",
+          "notes": [
+            {
+              "project": "wingman-ai",
+              "status": "implemented",
+              "summary": "The same analyze function used for typed text scores sentiment, questions, flirt language, reciprocity and message energy. The NLP module above covers it in depth.",
+              "input": "Clean text",
+              "output": "Signal scores and a vibe label"
+            }
+          ]
+        },
+        {
+          "id": "context",
+          "label": "Context retrieval",
+          "layer": "retrieval",
+          "concept": "With the text available, relevant guidance can be looked up from a local knowledge base.",
+          "notes": [
+            {
+              "project": "wingman-ai",
+              "status": "implemented",
+              "summary": "The conversation text is the query for TF-IDF and cosine-similarity retrieval, which returns the top three knowledge-base entries.",
+              "input": "Conversation text",
+              "output": "Top 3 guidance entries",
+              "code": {
+                "source": "core/coach.py",
+                "text": "rag_results = retrieve_context(\n    text,\n    top_k=3,\n)"
+              }
+            }
+          ]
+        },
+        {
+          "id": "result",
+          "label": "Structured result",
+          "layer": "retrieval",
+          "concept": "A flat image has become structured data that software can store and present.",
+          "notes": [
+            {
+              "project": "wingman-ai",
+              "status": "implemented",
+              "summary": "The API returns the extracted text with the full analysis. The Streamlit page presents it as a decision brief and saves a history entry to SQLite.",
+              "input": "Text, signals and guidance",
+              "output": "Extracted text and analysis as JSON",
+              "code": {
+                "source": "api.py",
+                "text": "return {'message':msg,'extracted_text':text,'analysis':analyze(text)}"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

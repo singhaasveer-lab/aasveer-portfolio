@@ -1,0 +1,420 @@
+/*
+ * Credential Orbit 3.0: the spatial credential environment. The WebGL canvas draws the system;
+ * small HTML tags sit above the certificate markers, placed in container units and moved only by
+ * transforms. The selector, toolbar, inspector and list reuse orbit.css. Tokens: globals.css.
+ * Sizes marked "model" must match TAG and CORE_CAPTION in space/model.ts.
+ */
+@layer components {
+  .cs-stage {
+    position: relative;
+    container-type: size;
+    height: clamp(560px, 50vw, 680px);
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background:
+      radial-gradient(34% 28% at 50% 46%, rgb(47 211 255 / 0.09), transparent 70%),
+      radial-gradient(60% 45% at 30% 70%, rgb(79 125 255 / 0.07), transparent 75%),
+      radial-gradient(50% 40% at 80% 20%, rgb(155 135 255 / 0.06), transparent 75%),
+      radial-gradient(120% 100% at 50% 50%, rgb(6 10 22), rgb(3 5 12) 80%);
+    isolation: isolate;
+  }
+  .cs-stage[data-compact] {
+    height: 470px;
+  }
+  /* A vignette, so the system reads as suspended in depth. */
+  .cs-stage::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 150;
+    pointer-events: none;
+    background: radial-gradient(100% 90% at 50% 50%, transparent 64%, rgb(2 4 10 / 0.7));
+  }
+
+  .cs-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100% !important;
+    height: 100% !important;
+    opacity: 0;
+    transition: opacity 900ms var(--ease-out);
+  }
+  .cs-stage[data-renderer="webgl"] .cs-canvas {
+    opacity: 1;
+  }
+
+  /* The model's own drawing: shown until WebGL is ready, and wherever it is unavailable. */
+  .cs-fallback {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    transition: opacity 700ms var(--ease-out);
+  }
+  .cs-fallback path {
+    fill: none;
+    vector-effect: non-scaling-stroke;
+  }
+  .cs-fallback-primary {
+    stroke: rgb(120 220 255 / 0.65);
+    stroke-width: 1.6;
+    filter: drop-shadow(0 0 4px rgb(63 213 245 / 0.6));
+  }
+  .cs-fallback-track {
+    stroke: rgb(110 150 255 / 0.28);
+    stroke-width: 1;
+    stroke-dasharray: 3 5;
+  }
+  .cs-stage[data-renderer="webgl"] .cs-fallback {
+    opacity: 0;
+  }
+
+  /* ---- Certificate tags: compact, above each marker (model: 62 x 46) ---- */
+  .cs-tag {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    width: 62px;
+    height: 46px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--text);
+    font: inherit;
+    cursor: pointer;
+    transform: translate(calc(var(--x) * 1cqw - 50%), calc(var(--y) * 1cqh - 50%));
+    transition: opacity 400ms var(--ease-out);
+    will-change: transform;
+  }
+  /* The visible chip; the button around it keeps a full touch target. */
+  .cs-tag::before {
+    content: "";
+    position: absolute;
+    inset: 9px 3px;
+    border: 1px solid rgb(127 231 255 / 0.35);
+    border-radius: 999px;
+    background: rgb(6 12 26 / 0.78);
+    filter: brightness(calc(0.75 + 0.25 * var(--near)));
+    transition:
+      border-color 250ms var(--ease-out),
+      box-shadow 250ms var(--ease-out),
+      background-color 250ms var(--ease-out);
+  }
+  .cs-tag-mark,
+  .cs-tag-id {
+    position: relative;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+  }
+  .cs-tag-mark {
+    color: var(--accent-strong);
+  }
+  .cs-tag-id {
+    color: var(--text);
+  }
+  .cs-tag:hover::before,
+  .cs-tag:focus-visible::before {
+    border-color: var(--accent);
+    background: rgb(10 26 46 / 0.92);
+    box-shadow: 0 0 16px -4px var(--accent);
+  }
+  .cs-tag[data-hot]::before,
+  .cs-tag[data-selected]::before {
+    border-color: color-mix(in srgb, var(--accent) 85%, transparent);
+    box-shadow: 0 0 14px -3px rgb(63 213 245 / 0.7);
+  }
+  .cs-tag[data-dim] {
+    opacity: 0.6;
+  }
+  .cs-tag[data-dim]::before {
+    border-color: rgb(127 231 255 / 0.14);
+  }
+  .cs-tag[data-dim] .cs-tag-mark,
+  .cs-tag[data-dim] .cs-tag-id {
+    color: var(--text);
+  }
+  .cs-tag[data-offscreen] {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .cs-tag:hover,
+  .cs-tag:focus-visible {
+    z-index: 140 !important;
+    opacity: 1;
+  }
+
+  /* The title preview: one at a time, on hover or focus, opening away from the nearest edge. */
+  .cs-preview {
+    position: absolute;
+    bottom: calc(100% - 4px);
+    left: 50%;
+    display: grid;
+    gap: 2px;
+    width: max-content;
+    max-width: 240px;
+    padding: 8px 11px;
+    border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+    border-radius: 3px;
+    background: rgb(6 12 26 / 0.95);
+    box-shadow: 0 12px 30px -12px rgb(0 0 0 / 0.9);
+    text-align: left;
+    white-space: normal;
+    /* Hidden until asked for: visibility, not transparency, so it is never invisible content. */
+    visibility: hidden;
+    transform: translate(-50%, 4px) scale(0.96);
+    transition:
+      transform 220ms var(--ease-out),
+      visibility 0s linear 220ms;
+    pointer-events: none;
+  }
+  .cs-tag[data-flip="below"] .cs-preview {
+    top: calc(100% - 4px);
+    bottom: auto;
+    transform: translate(-50%, -4px);
+  }
+  .cs-tag[data-align="start"] .cs-preview {
+    left: 0;
+    transform: translate(0, 4px);
+  }
+  .cs-tag[data-align="end"] .cs-preview {
+    right: 0;
+    left: auto;
+    transform: translate(0, 4px);
+  }
+  .cs-tag:hover .cs-preview,
+  .cs-tag:focus-visible .cs-preview {
+    visibility: visible;
+    transform: translate(-50%, 0);
+    transition:
+      transform 220ms var(--ease-out),
+      visibility 0s;
+  }
+  .cs-tag[data-align="start"]:hover .cs-preview,
+  .cs-tag[data-align="start"]:focus-visible .cs-preview,
+  .cs-tag[data-align="end"]:hover .cs-preview,
+  .cs-tag[data-align="end"]:focus-visible .cs-preview {
+    transform: translate(0, 0);
+  }
+  .cs-preview-title {
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    line-height: 1.2;
+    color: var(--text);
+  }
+  .cs-preview-issuer {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+  }
+
+  /* Phones: a round 46px touch target on each marker, number over academy initials. */
+  .cs-stage[data-compact] .cs-tag {
+    flex-direction: column;
+    gap: 0;
+    width: 46px;
+    line-height: 1.05;
+  }
+  .cs-stage[data-compact] .cs-tag::before {
+    inset: 4px;
+    border-radius: 50%;
+  }
+  .cs-stage[data-compact] .cs-tag-mark,
+  .cs-stage[data-compact] .cs-tag-id {
+    font-size: 0.56rem;
+  }
+
+  /* ---- Certificate name labels (wide stages; model: 168 x 58, 142 on tablets) ---- */
+  .cs-links {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+  .cs-links line {
+    stroke: rgb(127 231 255 / 0.32);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+    transition:
+      stroke 250ms var(--ease-out),
+      stroke-opacity 250ms var(--ease-out);
+  }
+  .cs-links line[data-dim] {
+    stroke-opacity: 0.35;
+  }
+  .cs-links line[data-hot] {
+    stroke: rgb(127 231 255 / 0.85);
+  }
+  .cs-links line[data-hover] {
+    stroke: var(--accent-strong);
+    stroke-opacity: 1;
+  }
+  .cs-links line[data-offscreen] {
+    stroke-opacity: 0;
+  }
+  .cs-tag[data-labelled] {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 2px;
+    width: 168px;
+    height: 58px;
+    padding: 6px 10px;
+    text-align: left;
+  }
+  @container (max-width: 859px) {
+    .cs-tag[data-labelled] {
+      width: 142px;
+    }
+  }
+  /* A light backing for legibility over the tracks, not a card. */
+  .cs-tag[data-labelled]::before {
+    inset: 0;
+    border-color: rgb(127 231 255 / 0.1);
+    border-radius: 4px;
+    background: rgb(5 10 22 / 0.6);
+  }
+  .cs-tag[data-labelled][data-hot]::before,
+  .cs-tag[data-labelled][data-selected]::before {
+    border-color: color-mix(in srgb, var(--accent) 70%, transparent);
+    box-shadow: 0 0 14px -4px rgb(63 213 245 / 0.6);
+  }
+  .cs-tag[data-labelled]:hover::before,
+  .cs-tag[data-labelled]:focus-visible::before {
+    border-color: var(--accent);
+    background: rgb(8 20 38 / 0.85);
+    box-shadow: 0 0 16px -4px var(--accent);
+  }
+  .cs-tag-code {
+    position: relative;
+    display: inline-flex;
+    gap: 5px;
+  }
+  .cs-tag-title {
+    position: relative;
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    font-size: 0.8rem;
+    line-height: 1.22;
+    color: #cdd5e4;
+    transition: color 220ms var(--ease-out);
+  }
+  .cs-tag[data-hot] .cs-tag-title,
+  .cs-tag[data-selected] .cs-tag-title {
+    color: var(--accent-strong);
+  }
+  .cs-tag:hover .cs-tag-title,
+  .cs-tag:focus-visible .cs-tag-title {
+    color: var(--text);
+  }
+  .cs-tag[data-labelled][data-dim] {
+    opacity: 0.66;
+  }
+  /* Labels show their title already: the preview appears only for titles that may be cut short. */
+  .cs-tag[data-labelled]:not([data-long]) .cs-preview {
+    display: none;
+  }
+
+  /* ---- Phones: every name in a compact list under the scene ---- */
+  .cs-names {
+    display: grid;
+    gap: 2px;
+    margin: 12px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .cs-name {
+    display: grid;
+    grid-template-columns: 3.4rem minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 46px;
+    padding: 6px 10px;
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    background: none;
+    color: #cdd5e4;
+    font: inherit;
+    font-size: 0.9rem;
+    text-align: left;
+    cursor: pointer;
+  }
+  .cs-name-code {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.06em;
+    color: var(--accent-strong);
+  }
+  .cs-name[data-hot],
+  .cs-name[data-selected] {
+    border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+    color: var(--accent-strong);
+  }
+  .cs-name[data-dim] {
+    opacity: 0.66;
+  }
+
+  /* While the inspector is open, the other tags step back. */
+  .cs-stage[data-inspecting] .cs-tag:not([data-selected]) {
+    opacity: 0.6;
+  }
+
+  /* ---- Cinematic entrance: selector, then interface labels, after the scene assembles ---- */
+  .cs[data-ready]:not([data-entered]) .cs-tag,
+  .cs[data-ready]:not([data-entered]) .cs-academies .co-academy {
+    opacity: 0;
+  }
+  .cs[data-entered] .cs-academies .co-academy {
+    animation: cs-rise 520ms var(--ease-out) both;
+    animation-delay: calc(1500ms + var(--k) * 55ms);
+  }
+  .cs[data-entered] .cs-tag {
+    animation: cs-fade 520ms var(--ease-out) both;
+    animation-delay: calc(1800ms + var(--k) * 45ms);
+  }
+  @keyframes cs-rise {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+  @keyframes cs-fade {
+    from {
+      opacity: 0;
+    }
+  }
+
+  /* ---- The Credential Inspector: docked beside the system, never over all of it ---- */
+  .cs-panel[data-docked] {
+    top: 14px;
+    right: 14px;
+    bottom: 14px;
+    z-index: 300;
+    width: min(390px, calc(100% - 28px));
+    border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line));
+    border-radius: 4px;
+    background:
+      linear-gradient(rgb(200 214 255 / 0.03) 1px, transparent 1px) 0 0 / 100% 28px,
+      rgb(7 11 22 / 0.94);
+    box-shadow:
+      0 0 0 1px rgb(63 213 245 / 0.08),
+      0 30px 60px -24px rgb(0 0 0 / 0.95);
+  }
+  /* Phones: stacked under the scene. */
+  .cs-panel:not([data-docked]) {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    margin-top: 12px;
+    border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line));
+    border-radius: 4px;
+    box-shadow: none;
+  }
+}

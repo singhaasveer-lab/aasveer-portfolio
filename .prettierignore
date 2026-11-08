@@ -1,0 +1,14 @@
+node_modules
+.next
+out
+pnpm-lock.yaml
+planning
+private
+playwright-report
+test-results
+lighthouse-reports
+data
+*.md
+_resume_extract.txt
+tests/fixtures
+src/components/motion-primitives
