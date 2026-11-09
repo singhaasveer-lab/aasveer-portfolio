@@ -86,12 +86,28 @@ export function ContactForm() {
       setTouched({});
       return;
     }
+    // The typed message stays in place on every failure, so nothing has to be written again.
     setFailure(
-      result.reason === "timeout"
-        ? "The message service took too long to respond. Your message was not sent; please try again."
-        : "Your message could not be sent. Nothing was delivered; please try again in a moment.",
+      result.fields
+        ? "Your message was not sent. Check the highlighted field and try again."
+        : result.reason === "timeout"
+          ? "The message service took too long to respond. Your message was not sent; please try again."
+          : result.reason === "rate-limited"
+            ? "Too many messages were sent in a short time. Your message was not sent; please wait a few minutes and try again."
+            : "Your message could not be sent. Nothing was delivered; please try again in a moment.",
     );
     setStatus("failed");
+    if (result.fields) {
+      const rejected = result.fields;
+      setErrors(rejected);
+      const firstRejected = FIELDS.find((f) => rejected[f.key]);
+      // Focus after the inputs are re-enabled on the next render.
+      if (firstRejected) {
+        requestAnimationFrame(() =>
+          form.current?.querySelector<HTMLElement>(`[name="${firstRejected.key}"]`)?.focus(),
+        );
+      }
+    }
   };
 
   if (status === "sent") {

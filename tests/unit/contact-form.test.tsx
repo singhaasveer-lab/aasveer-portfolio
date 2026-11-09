@@ -67,6 +67,28 @@ describe("contact rules", () => {
     });
   });
 
+  it("maps the service's field errors and its rate limit", async () => {
+    const answer = (status: number, body: unknown) =>
+      vi.fn().mockResolvedValue(new Response(JSON.stringify(body), { status }));
+    const fields = { name: "A", email: "a@b.co", message: "Hi", honeypot: "" };
+    const typeEmail = {
+      errors: [{ code: "TYPE_EMAIL", field: "email", message: "should be an email" }],
+    };
+    const result = await submitContact(ENDPOINT, fields, answer(422, typeEmail));
+    expect(result.ok).toBe(false);
+    expect(!result.ok && result.fields?.email).toMatch(/did not accept this email/);
+    // A form-level error (no field) stays a plain rejection.
+    const notFound = { errors: [{ code: "FORM_NOT_FOUND", message: "Form not found" }] };
+    expect(await submitContact(ENDPOINT, fields, answer(404, notFound))).toEqual({
+      ok: false,
+      reason: "rejected",
+    });
+    expect(await submitContact(ENDPOINT, fields, answer(429, {}))).toEqual({
+      ok: false,
+      reason: "rate-limited",
+    });
+  });
+
   it("gives up after the timeout and says so", async () => {
     const hang = vi.fn(
       (_url: string, init?: RequestInit) =>
@@ -158,6 +180,28 @@ describe("ContactForm", () => {
       "Hello there",
     );
     expect(screen.getByTestId("contact-submit").hasAttribute("disabled")).toBe(false);
+  });
+
+  it("shows the service's field rejection under that field and keeps every value", async () => {
+    // The body Formspree returns for an address it rejects (recorded from a real 422 response).
+    const rejected = {
+      errors: [{ code: "TYPE_EMAIL", field: "email", message: "should be an email" }],
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response(JSON.stringify(rejected), { status: 422 })),
+    );
+    await renderForm(ENDPOINT);
+    fill("Ada", "ada@example.com", "Hello there");
+    submit();
+    await waitFor(() => expect(screen.getByTestId("contact-error-email")).toBeDefined());
+    expect(screen.getByTestId("contact-error-email").textContent).toMatch(/did not accept/);
+    expect(screen.getByRole("alert").textContent).toMatch(/highlighted field/);
+    expect(screen.queryByTestId("contact-success")).toBeNull();
+    expect((screen.getByLabelText("Full name") as HTMLInputElement).value).toBe("Ada");
+    expect((screen.getByLabelText("Your message") as HTMLTextAreaElement).value).toBe(
+      "Hello there",
+    );
   });
 
   it("does not write submitted details to the console", async () => {

@@ -550,11 +550,30 @@ test.describe("open channel", () => {
     await expect(form.getByTestId("contact-error-email")).toContainText("valid email address");
   });
 
+  test("with a configured endpoint, a failed send keeps the message and claims nothing", async ({
+    page,
+  }) => {
+    const form = page.getByTestId("contact-form");
+    await hydrated(page);
+    const endpoint = await form.getAttribute("action");
+    test.skip(!endpoint, "this build has no contact endpoint");
+    // The request never leaves the browser: no message is sent and no response is invented.
+    await page.route(endpoint!, (route) => route.abort("internetdisconnected"));
+    await form.getByLabel("Full name").fill("Ada Lovelace");
+    await form.getByLabel("Email address").fill("ada@example.com");
+    await form.getByLabel("Your message").fill("Hello");
+    await form.getByTestId("contact-submit").click();
+    await expect(form.getByTestId("contact-failure")).toContainText("could not be sent");
+    await expect(page.getByTestId("contact-success")).toHaveCount(0);
+    await expect(form.getByLabel("Your message")).toHaveValue("Hello");
+  });
+
   test("without a configured endpoint it never claims a message was sent", async ({ page }) => {
     const requests: string[] = [];
     page.on("request", (r) => r.method() === "POST" && requests.push(r.url()));
     const form = page.getByTestId("contact-form");
     await hydrated(page);
+    test.skip(!!(await form.getAttribute("action")), "this build has a contact endpoint");
     await expect(form.getByTestId("contact-unconfigured")).toBeVisible();
     await form.getByLabel("Full name").fill("Ada Lovelace");
     await form.getByLabel("Email address").fill("ada@example.com");

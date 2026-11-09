@@ -48,7 +48,39 @@ export function contactEndpoint(value: string | undefined): string | null {
   }
 }
 
-export type SubmitResult = { ok: true } | { ok: false; reason: "rejected" | "network" | "timeout" };
+export type SubmitResult =
+  | { ok: true }
+  | {
+      ok: false;
+      reason: "rejected" | "rate-limited" | "network" | "timeout";
+      /** Fields the service itself rejected, with a message to show under each. */
+      fields?: ContactErrors;
+    };
+
+const SERVICE_FIELD_ERROR: Record<keyof ContactFields, string> = {
+  name: "The message service did not accept this name. Check it and try again.",
+  email: "The message service did not accept this email address. Check it and try again.",
+  message: "The message service did not accept this message. Check it and try again.",
+};
+
+/**
+ * Field errors from the service's JSON error body. Formspree answers a rejected submission with
+ * `{ errors: [{ field, code, message }] }`; only the three known fields are mapped, and the wording
+ * shown is ours, not the service's.
+ */
+function serviceFieldErrors(body: unknown): ContactErrors | undefined {
+  if (!body || typeof body !== "object" || !("errors" in body) || !Array.isArray(body.errors)) {
+    return undefined;
+  }
+  const found: ContactErrors = {};
+  for (const item of body.errors as unknown[]) {
+    const field = item && typeof item === "object" && "field" in item ? item.field : undefined;
+    if (field === "name" || field === "email" || field === "message") {
+      found[field] = SERVICE_FIELD_ERROR[field];
+    }
+  }
+  return Object.keys(found).length > 0 ? found : undefined;
+}
 
 /**
  * Sends the message as JSON. Success is reported only when the service answers with a 2xx status
@@ -75,8 +107,12 @@ export async function submitContact(
       }),
       signal: controller.signal,
     });
-    if (!response.ok) return { ok: false, reason: "rejected" };
     const body: unknown = await response.json().catch(() => null);
+    if (response.status === 429) return { ok: false, reason: "rate-limited" };
+    if (!response.ok) {
+      const fields = serviceFieldErrors(body);
+      return fields ? { ok: false, reason: "rejected", fields } : { ok: false, reason: "rejected" };
+    }
     if (body && typeof body === "object" && "ok" in body && body.ok === false) {
       return { ok: false, reason: "rejected" };
     }
